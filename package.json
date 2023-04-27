@@ -1,0 +1,46 @@
+{
+  "name": "vscode-cwscript",
+  "displayName": "CWScript Language Support",
+  "description": "Adds CWScript language support and utils to VS Code",
+  "version": "0.0.1",
+  "publisher": "terran-one",
+  "engines": {
+    "vscode": "^1.22.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "main": "./client/out/extension",
+  "contributes": {
+    "languages": [
+      {
+        "id": "cwscript",
+        "aliases": [
+          "CWScript",
+          "cwscript"
+        ],
+        "extensions": [
+          ".cws"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "cwscript",
+        "scopeName": "source.cwscript",
+        "path": "./syntaxes/cwscript.tmLanguage.json"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "bun run compile",
+    "compile": "tsc -b",
+    "watch": "tsc -b -w",
+    "lint": "eslint ./clinet/src ./server/src --ext .ts,.tsx",
+    "postinstall": "cd client && bun install && cd ../server && bun install && cd.."
+  },
+  "devDependencies": {
+    "typescript": "^5.0.4"
+  }
+}

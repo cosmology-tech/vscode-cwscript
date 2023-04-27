@@ -1,0 +1,160 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "CWScript",
+  "scopeName": "source.cwscript",
+  "fileTypes": ["cwscript"],
+  "patterns": [
+    {
+      "name": "comment.block.cwscript",
+      "begin": "\\/\\*",
+      "end": "\\*\\/",
+      "captures": {
+        "0": {
+          "name": "punctuation.definition.comment.cwscript"
+        }
+      }
+    },
+    {
+      "include": "#punctuation"
+    },
+    {
+      "name": "comment.line.double-slash.cwscript",
+      "match": "\\/\\/[^\n]*"
+    },
+    {
+      "name": "constant.language.cwscript",
+      "match": "\\$env|\\$info|\\$response|\\$state|\\$"
+    },
+    {
+      "name": "keyword.operator.cwscript",
+      "match": "\\b(call|debug|delegate_exec|exec|fail|instantiate|query)!|\\b(emit)\\b"
+    },
+    {
+      "name": "keyword.control.cwscript",
+      "match": "\\b(and|as|catch|const|contract|else|enum|error|event|extends|for|from|if|implements|import|in|instantiate|interface|is|let|mut|none|not|or|return|state|struct|try|type)\\b"
+    },
+    {
+      "include": "#constants"
+    },
+    {
+      "begin": "(\\b(fn|exec|query|reply\\.on_success|reply\\.on_error|reply)\\b\\s*(#?[a-zA-Z_][a-zA-Z0-9_]*!?))|(#instantiate\\b)\\s*\\(",
+      "beginCaptures": {
+        "2": { "name": "keyword.control.cwscript" },
+        "3": { "name": "entity.name.function.cwscript" },
+        "4": { "name": "entity.name.function.cwscript" }
+      },
+      "end": "(\\))",
+      "patterns": [
+        {
+          "match": "\\s*(([a-z_][a-zA-Z0-9_]*\\?)|([a-z_][a-zA-Z0-9_]*))\\s*(?=:)",
+          "name": "variable.parameter.cwscript",
+          "captures": {
+            "2": { "name": "markup.italic" }
+          }
+        },
+        {
+          "include": "#punctuation"
+        },
+        {
+          "include": "#type-expr"
+        }
+      ]
+    },
+    {
+      "name": "entity.other",
+      "match": "\\@[a-zA-Z_][a-zA-Z0-9_]*(\\.[a-zA-Z_][a-zA-Z0-9_]*)*",
+      "captures": {
+        "0": { "name": "markup.italic" }
+      }
+    },
+    {
+      "match": "\\b([a-zA-Z_][a-zA-Z0-9_]*)(?=(=))",
+      "captures": {
+        "1": { "name": "variable.parameter.cwscript" }
+      }
+    },
+    {
+      "include": "#function-call"
+    },
+    {
+      "include": "#type-expr"
+    }
+  ],
+  "repository": {
+    "paren-expression": {
+      "begin": "\\(",
+      "end": "\\)",
+      "beginCaptures": {
+        "0": { "name": "punctuation.paren.open" }
+      },
+      "endCaptures": {
+        "0": { "name": "punctuation.paren.close" }
+      },
+      "name": "expression.group",
+      "patterns": [{ "include": "#type-expr" }]
+    },
+    "type-expr": {
+      "patterns": [
+        {
+          "name": "entity.name.type.cwscript",
+          "match": "([A-Z][a-zA-Z0-9_]*)"
+        },
+        {
+          "name": "entity.name.function.cwscript",
+          "match": "#([a-zA-Z_][a-zA-Z0-9_]*)"
+        },
+        {
+          "include": "#paren-expression"
+        }
+      ]
+    },
+    "function-call": {
+      "patterns": [
+        {
+          "name": "entity.name.type.cwscript",
+          "match": "([A-Z][a-zA-Z0-9_]*!?)(?=(\\s*\\())"
+        },
+        {
+          "name": "entity.name.function.cwscript",
+          "match": "#[a-zA-Z0-9_]+!?(?=(\\s*\\())"
+        },
+        {
+          "name": "entity.name.function.cwscript",
+          "match": "([a-z_][a-zA-Z0-9_]*!)(?=(\\s*\\())"
+        }
+      ]
+    },
+    "punctuation": {
+      "patterns": [
+        {
+          "match": "\\?\\?|\\?|;|:|::|->|=>|=|-|\\+|\\*|\\/|%|\\^|\\||&|\\(|\\)|\\[|\\]|\\{|\\}|<|>|,|\\.",
+          "name": "keyword.operator.cwscript"
+        },
+        {
+          "match": "'[^']*'",
+          "name": "string.quoted.single"
+        },
+        {
+          "match": "\"[^\"]*\"",
+          "name": "string.quoted.double"
+        },
+        {
+          "match": "\\b(\\d+(\\.\\d*)?|\\.\\d+)([eE][+-]?\\d+)?\\b",
+          "name": "constant.numeric"
+        }
+      ]
+    },
+    "constants": {
+      "patterns": [
+        {
+          "match": "\\b(none)\\b",
+          "name": "constant.language"
+        },
+        {
+          "match": "\\b(true|false)\\b",
+          "name": "constant.language.boolean"
+        }
+      ]
+    }
+  }
+}

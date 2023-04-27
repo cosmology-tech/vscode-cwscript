@@ -1,0 +1,15 @@
+{
+  "name": "vscode-cwscript-client",
+  "version": "1.0.0",
+  "main": "out/extension.js",
+  "author": "William Chen",
+  "license": "MIT",
+  "dependencies": {
+    "vscode": "1.1.37",
+    "vscode-languageclient": "^8.1.0"
+  },
+  "devDependencies": {
+    "@types/vscode": "1.77.0",
+    "typescript": "^5.0.4"
+  }
+}
