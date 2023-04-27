@@ -1,65 +1,57 @@
-# vscode-cwscript README
+# CWScript Language Support for VS Code
 
-This is the README for your extension "vscode-cwscript". After writing up a brief description, we recommend including the following sections.
+This extension provides syntax highlighting and code snippets for the CWScript programming language in Visual Studio Code.
+
+![banner.png](banner.png)
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+- Syntax highlighting for CWScript files (\*.cws).
+- Snippets for common CWScript code patterns.
+- Code completion for keywords, constants, and function names.
+- Parameter hints for function calls.
+- Hover information for keywords, constants, and function names.
 
-For example if there is an image subfolder under your extension project workspace:
+## Installation
 
-\!\[feature X\]\(images/feature-x.png\)
+1. Launch Visual Studio Code.
+2. Open the Extensions view by clicking on the Extensions icon in the Activity Bar on the side of the VS Code window.
+3. Search for "CWScript" in the Extensions Marketplace.
+4. Click the Install button next to the CWScript extension.
+5. After installation, the extension will be activated automatically.
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+## Usage
 
-## Requirements
+Once installed, the extension provides syntax highlighting, code snippets, and other features when editing CWScript files.
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+### Syntax Highlighting
 
-## Extension Settings
+The extension provides syntax highlighting for CWScript files. Keywords, constants, and function names are highlighted with different colors to make them stand out from the rest of the code. Comments are also highlighted with a different color.
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+### Code Snippets
 
-For example:
+The extension provides code snippets for common CWScript code patterns. To use a code snippet, type the snippet keyword and press `Tab`. The code snippet will be inserted into the editor.
 
-This extension contributes the following settings:
+### Code Completion
 
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
+The extension provides code completion for keywords, constants, and function names. As you type code in the editor, the extension will suggest keywords, constants, and function names that match what you're typing. You can accept a suggestion by pressing `Enter`.
 
-## Known Issues
+### Parameter Hints
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
+The extension provides parameter hints for function calls. As you type a function call in the editor, the extension will display a tooltip with the function's parameters and their types. This can help you remember the correct order of parameters and their types.
 
-## Release Notes
+### Hover Information
 
-Users appreciate release notes as you update your extension.
+The extension provides hover information for keywords, constants, and function names. If you hover over a keyword, constant, or function name in the editor, the extension will display a tooltip with information about what the keyword, constant, or function does.
 
-### 1.0.0
+## Contributing
 
-Initial release of ...
+Contributions to this extension are welcome! To contribute:
 
-### 1.0.1
+1. Fork the repository.
+2. Make your changes and commit them to your fork.
+3. Submit a pull request.
 
-Fixed issue #.
+## Credits
 
-### 1.1.0
-
-Added features X, Y, and Z.
-
----
-
-## Working with Markdown
-
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+This extension is based on the TextMate-compatible syntax definition for CWScript by Martin Ring (https://github.com/martinring/tmlanguage). The code snippets are based on the CWScript documentation (https://developers.cloudflare.com/workers/runtime-apis/cwscript).
