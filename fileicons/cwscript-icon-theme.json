@@ -1,0 +1,19 @@
+{
+  "languageIds": {
+    "cwscript": "cwscript"
+  },
+  "fileExtensions": {
+    "cws": "_cwscript"
+  },
+  "fileNames": {
+    "cwsproject.toml": "_cwsproject",
+  },
+  "iconDefinitions": {
+    "_cwscript": {
+      "iconPath": "./images/cws_source.svg"
+    },
+    "_cwsproject": {
+      "iconPath": "./images/cwsproject.png"
+    },
+  }
+}

@@ -12,6 +12,13 @@
   ],
   "main": "./client/out/extension",
   "contributes": {
+    "iconThemes": [
+      {
+        "id": "cwscript",
+        "label": "CWScript File Icons",
+        "path": "./fileicons/cwscript-icon-theme.json"
+      }
+    ],
     "themes": [
       {
         "id": "cwscript-dark",
