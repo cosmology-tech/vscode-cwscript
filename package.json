@@ -12,6 +12,14 @@
   ],
   "main": "./client/out/extension",
   "contributes": {
+    "themes": [
+      {
+        "id": "cwscript-dark",
+        "label": "CWScript Dark",
+        "uiTheme": "vs-dark",
+        "path": "./themes/cwscript-dark.json"
+      }
+    ],
     "languages": [
       {
         "id": "cwscript",
