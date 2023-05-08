@@ -49,13 +49,14 @@
     ]
   },
   "scripts": {
-    "vscode:prepublish": "bun run compile",
+    "vscode:prepublish": "yarn run compile",
     "compile": "tsc -b",
     "watch": "tsc -b -w",
-    "lint": "eslint ./clinet/src ./server/src --ext .ts,.tsx",
-    "postinstall": "cd client && bun install && cd ../server && bun install && cd.."
+    "lint": "eslint ./client/src ./server/src --ext .ts,.tsx",
+    "postinstall": "cd client && yarn && cd ../server && yarn && cd .."
   },
   "devDependencies": {
+    "@types/node": "^20.1.0",
     "typescript": "^5.0.4"
   }
 }

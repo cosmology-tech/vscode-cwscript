@@ -3,22 +3,60 @@
 // Hover to view descriptions of existing attributes.
 // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
 {
-	"version": "0.2.0",
-    "configurations": [
-        {
-            "name": "Extension",
-            "type": "extensionHost",
-            "request": "launch",
-            "runtimeExecutable": "${execPath}",
-            "outFiles": ["${workspaceRoot}/client/out/**/*.js"],
-            "preLaunchTask": {
-              "type": "npm",
-              "script": "vscode:prepublish",
-            },
-            "args": [
-                "--extensionDevelopmentPath=${workspaceFolder}",
-                "${workspaceFolder}/test-workspace"
-            ]
-        }
-    ]
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Extension",
+      "type": "extensionHost",
+      "request": "launch",
+      "runtimeExecutable": "${execPath}",
+      "sourceMaps": true,
+      "preLaunchTask": {
+        "type": "npm",
+        "script": "vscode:prepublish"
+      },
+      "args": [
+        "--extensionDevelopmentPath=${workspaceFolder}",
+        "${workspaceFolder}/test-workspace"
+      ],
+      "resolveSourceMapLocations": [
+        "${workspaceFolder}/**",
+        "!**/node_modules/**"
+      ]
+    },
+    {
+      "type": "node",
+      "request": "attach",
+      "name": "Attach to Server",
+      "port": 6009,
+      "restart": true,
+      "outFiles": ["${workspaceRoot}/server/out/**/*.js"],
+      "resolveSourceMapLocations": [
+        "${workspaceFolder}/**",
+        "!**/node_modules/**"
+      ],
+      "sourceMaps": true,
+      "skipFiles": ["<node_internals>/**"]
+    }
+  ],
+  //   {
+  //     "name": "Debug Server",
+  //     "type": "node",
+  //     "request": "launch",
+  //     "runtimeExecutable": "node",
+  //     "args": [
+  //       "--inspect",
+  //       "--inspect-port=6009",
+  //       "${workspaceFolder}/server/node_modules/vscode-languageserver/lib/cli.js",
+  //       "--stdio"
+  //     ],
+  //     "autoAttachChildProcesses": true
+  //   }
+  // ],
+  "compounds": [
+    {
+      "name": "Client + Server",
+      "configurations": ["Extension", "Attach to Server"]
+    }
+  ]
 }

@@ -66,8 +66,7 @@ contract TerraswapFactory {
     if asset_infos[0] == asset_infos[1] {
       fail! "same asset"
     }
-
-
+    
     let asset_1_decimal = query_decimals!($env.contract.address, asset_infos[0])
     let asset_2_decimal = query_decimals!($env.contract.address, asset_infos[1])
     let asset_decimals = [asset_1_decimal, asset_2_decimal]

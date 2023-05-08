@@ -15,10 +15,19 @@ function activate(context) {
     // If the extension is launched in debug mode then the debug server options are used
     // Otherwise the run options are used
     const serverOptions = {
-        run: { module: serverModule, transport: node_1.TransportKind.ipc },
+        run: {
+            module: serverModule,
+            transport: node_1.TransportKind.ipc,
+            options: {
+                execArgv: ["--nolazy", "--inspect=6009"],
+            },
+        },
         debug: {
             module: serverModule,
             transport: node_1.TransportKind.ipc,
+            options: {
+                execArgv: ["--nolazy", "--inspect=6009"],
+            },
         },
     };
     // Options to control the language client
@@ -26,7 +35,7 @@ function activate(context) {
         // Register the server for plain text documents
         documentSelector: [{ scheme: "file", language: "cwscript" }],
         synchronize: {
-            // Notify the server about file changes to '.clientrc files contained in the workspace
+            // Notify the server about file changes to 'cwsproject.toml' files contained in the workspace
             fileEvents: vscode_1.workspace.createFileSystemWatcher("**/cwsproject.toml"),
         },
     };

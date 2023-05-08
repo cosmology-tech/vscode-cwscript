@@ -5,6 +5,7 @@
   "author": "William Chen",
   "license": "MIT",
   "dependencies": {
+    "vscode-jsonrpc": "^8.1.0",
     "vscode-languageserver": "8.1.0",
     "vscode-languageserver-textdocument": "^1.0.0"
   },

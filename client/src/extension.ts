@@ -5,6 +5,7 @@
 
 import * as path from "path";
 import { workspace, ExtensionContext } from "vscode";
+import * as vscode from "vscode";
 
 import {
   LanguageClient,
@@ -24,10 +25,19 @@ export function activate(context: ExtensionContext) {
   // If the extension is launched in debug mode then the debug server options are used
   // Otherwise the run options are used
   const serverOptions: ServerOptions = {
-    run: { module: serverModule, transport: TransportKind.ipc },
+    run: {
+      module: serverModule,
+      transport: TransportKind.ipc,
+      options: {
+        execArgv: ["--nolazy", "--inspect=6009"],
+      },
+    },
     debug: {
       module: serverModule,
       transport: TransportKind.ipc,
+      options: {
+        execArgv: ["--nolazy", "--inspect=6009"],
+      },
     },
   };
 
@@ -36,7 +46,7 @@ export function activate(context: ExtensionContext) {
     // Register the server for plain text documents
     documentSelector: [{ scheme: "file", language: "cwscript" }],
     synchronize: {
-      // Notify the server about file changes to '.clientrc files contained in the workspace
+      // Notify the server about file changes to 'cwsproject.toml' files contained in the workspace
       fileEvents: workspace.createFileSystemWatcher("**/cwsproject.toml"),
     },
   };
