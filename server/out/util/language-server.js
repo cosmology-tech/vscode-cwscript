@@ -11,6 +11,13 @@ class LanguageServer {
         this.settings = {};
         this.documents = new node_1.TextDocuments(vscode_languageserver_textdocument_1.TextDocument);
     }
+    inferCapabilities(capabilities) {
+        this.hasCapability["configuration"] = !!(capabilities.workspace && !!capabilities.workspace.configuration);
+        this.hasCapability["workspaceFolder"] = !!(capabilities.workspace && !!capabilities.workspace.workspaceFolders);
+        this.hasCapability["diagnosticRelatedInformation"] = !!(capabilities.textDocument &&
+            capabilities.textDocument.publishDiagnostics &&
+            capabilities.textDocument.publishDiagnostics.relatedInformation);
+    }
     listen() {
         if (!this.finishedSetup) {
             throw new Error("LanguageServer.setup() must be called before listen()");
@@ -23,17 +30,12 @@ class LanguageServer {
         return LanguageServer.Define({
             props: { services },
             beforeSetup: (server) => {
-                server.connection.onInitialize((params) => {
-                    let { capabilities } = params;
+                server.connection.onInitialize(({ capabilities }) => {
+                    server.inferCapabilities(capabilities);
                     let result = {
                         capabilities: {},
                         serverInfo,
                     };
-                    server.hasCapability["configuration"] = !!(capabilities.workspace && !!capabilities.workspace.configuration);
-                    server.hasCapability["workspaceFolder"] = !!(capabilities.workspace && !!capabilities.workspace.workspaceFolders);
-                    server.hasCapability["diagnosticRelatedInformation"] = !!(capabilities.textDocument &&
-                        capabilities.textDocument.publishDiagnostics &&
-                        capabilities.textDocument.publishDiagnostics.relatedInformation);
                     // process each service
                     for (let service of services) {
                         if (service.init) {

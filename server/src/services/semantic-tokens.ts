@@ -8,6 +8,8 @@ import {
 } from "vscode-languageserver/node";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { LanguageServer, LanguageService } from "../util/language-server";
+import { AST, CWSParser } from "@terran-one/cwsc";
+import { TextView } from "@terran-one/cwsc/dist/util/position";
 
 // include all token types and modifiers
 
@@ -67,10 +69,31 @@ const LEGEND = {
 
 function provideDocumentSemanticTokens(document: TextDocument): SemanticTokens {
   // TODO: implement the real semantic tokens
-  let tokensBuilder = new SemanticTokensBuilder();
-  tokensBuilder.push(0, 5, 100, tokTypeToNum.get("comment")!, 0);
-  tokensBuilder.push(14, 0, 100, tokTypeToNum.get("keyword")!, 0);
-  return tokensBuilder.build();
+  let text = document.getText();
+  let textView = new TextView(text);
+  let parser = new CWSParser(text);
+  let tb = new SemanticTokensBuilder();
+  try {
+    let ast = parser.parse();
+    ast.descendantsOfType(AST.Param).forEach((param) => {
+      if (param.name) {
+        // get the range
+        let { start, end } = textView.rangeOfNode(param.name.$ctx!)!;
+        tb.push(
+          start.line,
+          start.character,
+          end.character - start.character,
+          tokTypeToNum.get("parameter")!,
+          0
+        );
+      }
+    });
+    return tb.build();
+  } catch (e) {
+    console.log(e);
+    console.log(parser.errors);
+    return tb.build();
+  }
 }
 
 export default {

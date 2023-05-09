@@ -1,0 +1,19 @@
+import * from "./TerraswapFactory.cws"
+import {
+  ExtInterface,
+  ExtContract,
+  ExtFn,
+  ExtFnFallible,
+  ExtStruct,
+  ExtStructFn,
+  ExtEnum,
+  ExtTypeAlias
+} from "./ExtTest.cws"
+
+interface MyInterface {
+
+}
+
+contract MyContract {
+
+}

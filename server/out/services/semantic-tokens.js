@@ -1,6 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const node_1 = require("vscode-languageserver/node");
+const cwsc_1 = require("@terran-one/cwsc");
+const position_1 = require("@terran-one/cwsc/dist/util/position");
 // include all token types and modifiers
 const tokenTypesList = [
     "namespace",
@@ -52,11 +54,27 @@ const LEGEND = {
     tokenModifiers: tokenModifiersList,
 };
 function provideDocumentSemanticTokens(document) {
-    let text = document.uri;
-    let tokensBuilder = new node_1.SemanticTokensBuilder();
-    tokensBuilder.push(0, 5, text.length, tokTypeToNum.get("comment"), 0);
-    tokensBuilder.push(14, 0, 100, tokTypeToNum.get("keyword"), 0);
-    return tokensBuilder.build();
+    // TODO: implement the real semantic tokens
+    let text = document.getText();
+    let textView = new position_1.TextView(text);
+    let parser = new cwsc_1.CWSParser(text);
+    let tb = new node_1.SemanticTokensBuilder();
+    try {
+        let ast = parser.parse();
+        ast.descendantsOfType(cwsc_1.AST.Param).forEach((param) => {
+            if (param.name) {
+                // get the range
+                let { start, end } = textView.rangeOfNode(param.name.$ctx);
+                tb.push(start.line, start.character, end.character - start.character, tokTypeToNum.get("parameter"), 0);
+            }
+        });
+        return tb.build();
+    }
+    catch (e) {
+        console.log(e);
+        console.log(parser.errors);
+        return tb.build();
+    }
 }
 exports.default = {
     init(result) {
