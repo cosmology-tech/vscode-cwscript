@@ -24,9 +24,13 @@ function fnDefnSymbol(node: AST.FnDefn, textView: TextView): DocumentSymbol {
   };
 }
 
-function instantiateDefnSymbol(node: AST.InstantiateDefn, textView: TextView): DocumentSymbol {
+function instantiateDefnSymbol(
+  node: AST.InstantiateDefn,
+  textView: TextView
+): DocumentSymbol {
   let name = "#instantiate";
-  let { a, b } = (node.$ctx as InstantiateDefnContext).INSTANTIATE()!.sourceInterval!;
+  let { a, b } = (node.$ctx as InstantiateDefnContext).INSTANTIATE()!
+    .sourceInterval!;
   let selectionRange = textView.range(a, b)!;
   return {
     name: name,
@@ -35,9 +39,12 @@ function instantiateDefnSymbol(node: AST.InstantiateDefn, textView: TextView): D
     selectionRange,
     detail: "instantiate detail",
   };
-};
+}
 
-function execDefnSymbol(node: AST.ExecDefn, textView: TextView): DocumentSymbol {
+function execDefnSymbol(
+  node: AST.ExecDefn,
+  textView: TextView
+): DocumentSymbol {
   let name = node.name;
   let selectionRange = textView.rangeOfNode(name.$ctx!)!;
   return {
@@ -49,7 +56,10 @@ function execDefnSymbol(node: AST.ExecDefn, textView: TextView): DocumentSymbol 
   };
 }
 
-function queryDefnSymbol(node: AST.QueryDefn, textView: TextView): DocumentSymbol {
+function queryDefnSymbol(
+  node: AST.QueryDefn,
+  textView: TextView
+): DocumentSymbol {
   let name = node.name;
   let selectionRange = textView.rangeOfNode(name.$ctx!)!;
   return {
@@ -61,7 +71,10 @@ function queryDefnSymbol(node: AST.QueryDefn, textView: TextView): DocumentSymbo
   };
 }
 
-function contractDefnSymbol(node: AST.ContractDefn, textView: TextView): DocumentSymbol {
+function contractDefnSymbol(
+  node: AST.ContractDefn,
+  textView: TextView
+): DocumentSymbol {
   let name = node.name;
   let selectionRange = textView.rangeOfNode(name.$ctx!)!;
   return {
@@ -73,7 +86,10 @@ function contractDefnSymbol(node: AST.ContractDefn, textView: TextView): Documen
   };
 }
 
-function interfaceDefnSymbol(node: AST.InterfaceDefn, textView: TextView): DocumentSymbol {
+function interfaceDefnSymbol(
+  node: AST.InterfaceDefn,
+  textView: TextView
+): DocumentSymbol {
   let name = node.name;
   let selectionRange = textView.rangeOfNode(name.$ctx!)!;
   return {
@@ -85,7 +101,10 @@ function interfaceDefnSymbol(node: AST.InterfaceDefn, textView: TextView): Docum
   };
 }
 
-function structDefnSymbol(node: AST.StructDefn, textView: TextView): DocumentSymbol {
+function structDefnSymbol(
+  node: AST.StructDefn,
+  textView: TextView
+): DocumentSymbol {
   let name = node.name;
   let selectionRange: Range;
   if (!name) {
@@ -102,7 +121,10 @@ function structDefnSymbol(node: AST.StructDefn, textView: TextView): DocumentSym
   };
 }
 
-function enumDefnSymbol(node: AST.EnumDefn, textView: TextView): DocumentSymbol {
+function enumDefnSymbol(
+  node: AST.EnumDefn,
+  textView: TextView
+): DocumentSymbol {
   let name = node.name;
   let selectionRange = textView.rangeOfNode(name.$ctx!)!;
   return {
@@ -114,7 +136,10 @@ function enumDefnSymbol(node: AST.EnumDefn, textView: TextView): DocumentSymbol 
   };
 }
 
-function typeAliasDefnSymbol(node: AST.TypeAliasDefn, textView: TextView): DocumentSymbol {
+function typeAliasDefnSymbol(
+  node: AST.TypeAliasDefn,
+  textView: TextView
+): DocumentSymbol {
   let name = node.name;
   let selectionRange = textView.rangeOfNode(name.$ctx!)!;
   return {
@@ -124,7 +149,7 @@ function typeAliasDefnSymbol(node: AST.TypeAliasDefn, textView: TextView): Docum
     selectionRange,
     detail: "type alias detail",
   };
-};
+}
 
 function paramSymbol(node: AST.Param, textView: TextView): DocumentSymbol {
   let name = node.name;
@@ -136,9 +161,12 @@ function paramSymbol(node: AST.Param, textView: TextView): DocumentSymbol {
     selectionRange,
     detail: "param detail",
   };
-};
+}
 
-function enumVariantDefnSymbol(node: AST.EnumVariantStruct | AST.EnumVariantUnit, textView: TextView): DocumentSymbol {
+function enumVariantDefnSymbol(
+  node: AST.EnumVariantStruct | AST.EnumVariantUnit,
+  textView: TextView
+): DocumentSymbol {
   let name = node.name;
   let selectionRange = textView.rangeOfNode(name.$ctx!)!;
   return {
@@ -150,7 +178,10 @@ function enumVariantDefnSymbol(node: AST.EnumVariantStruct | AST.EnumVariantUnit
   };
 }
 
-function getDocumentSymbolOfNode(node: AST.AST, textView: TextView): DocumentSymbol | undefined {
+function getDocumentSymbolOfNode(
+  node: AST.AST,
+  textView: TextView
+): DocumentSymbol | undefined {
   let docSymbol: DocumentSymbol;
   if (node instanceof AST.FnDefn) {
     docSymbol = fnDefnSymbol(node, textView);
@@ -168,7 +199,10 @@ function getDocumentSymbolOfNode(node: AST.AST, textView: TextView): DocumentSym
     docSymbol = structDefnSymbol(node, textView);
   } else if (node instanceof AST.EnumDefn) {
     docSymbol = enumDefnSymbol(node, textView);
-  } else if (node instanceof AST.EnumVariantStruct || node instanceof AST.EnumVariantUnit) { 
+  } else if (
+    node instanceof AST.EnumVariantStruct ||
+    node instanceof AST.EnumVariantUnit
+  ) {
     docSymbol = enumVariantDefnSymbol(node, textView);
   } else if (node instanceof AST.TypeAliasDefn) {
     docSymbol = typeAliasDefnSymbol(node, textView);
@@ -176,23 +210,13 @@ function getDocumentSymbolOfNode(node: AST.AST, textView: TextView): DocumentSym
     return;
   }
 
-  if (docSymbol) {
-    docSymbol.children = node.descendants.map((child) => {
+  docSymbol.children = node.descendants
+    .map((child) => {
       return getDocumentSymbolOfNode(child, textView);
-    }).filter(c => c !== undefined) as DocumentSymbol[];
-  }
-}
+    })
+    .filter((c) => c !== undefined) as DocumentSymbol[];
 
-  let name = node.name;
-  let selectionRange = textView.rangeOfNode(name.$ctx!)!;
-  let symbol: DocumentSymbol = {
-    name: name.value,
-    kind: SymbolKind.Function,
-    range: textView.rangeOfNode(node.$ctx!)!,
-    selectionRange,
-    children: [],
-  };
-  return symbol;
+  return docSymbol;
 }
 
 export default {
@@ -211,7 +235,6 @@ export default {
       let { ast, textView } = cached;
       // get all functions
       for (let func of ast.descendantsOfType(AST.FnDefn)) {
-        let children = 
         let name = func.name;
         let selectionRange = textView.rangeOfNode(name.$ctx!)!;
         let symbol: DocumentSymbol = {
@@ -219,11 +242,7 @@ export default {
           kind: SymbolKind.Function,
           range: textView.rangeOfNode(func.$ctx!)!,
           selectionRange,
-          children: [
-            {
-
-            }
-          ],
+          children: [],
         };
         symbols.push(symbol);
       }
