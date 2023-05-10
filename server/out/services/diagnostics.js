@@ -13,32 +13,8 @@ exports.default = {
     },
     register(server) {
         const { connection, documents } = server;
-        documents.onDidChangeContent((change) => {
-            connection.sendDiagnostics({
-                uri: change.document.uri,
-                diagnostics: [
-                // {
-                //   severity: 1,
-                //   range: {
-                //     start: {
-                //       line: 0,
-                //       character: 0,
-                //     },
-                //     end: {
-                //       line: 50,
-                //       character: 50,
-                //     },
-                //   },
-                //   message: "test error diagnostics",
-                //   code: "E100",
-                //   source: "cwsls",
-                //   tags: [DiagnosticTag.Unnecessary],
-                //   codeDescription: {
-                //     href: "https://example.com",
-                //   },
-                // },
-                ],
-            });
+        server.parserListeners.push((uri, ast, parser) => {
+            connection.sendDiagnostics({ uri, diagnostics: parser.diagnostics });
         });
     },
 };

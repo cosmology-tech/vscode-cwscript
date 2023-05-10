@@ -1,15 +1,46 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.startLanguageServer = exports.LanguageServer = void 0;
+exports.LanguageServer = void 0;
 const node_1 = require("vscode-languageserver/node");
 const vscode_languageserver_textdocument_1 = require("vscode-languageserver-textdocument");
 class LanguageServer {
-    constructor(connection) {
-        this.connection = connection;
-        this.finishedSetup = false;
+    get connection() {
+        if (!this._connection) {
+            throw new Error("LanguageServer.connection not provided");
+        }
+        return this._connection;
+    }
+    constructor(serverInfo) {
+        this.serverInfo = serverInfo;
         this.hasCapability = {};
-        this.settings = {};
         this.documents = new node_1.TextDocuments(vscode_languageserver_textdocument_1.TextDocument);
+        this._connection = undefined;
+    }
+    __setup() {
+        this.beforeSetup();
+        this.setup();
+        this.afterSetup();
+    }
+    beforeSetup() {
+        this.connection.onInitialize(({ capabilities }) => {
+            this.inferCapabilities(capabilities);
+            let result = {
+                capabilities: {},
+                serverInfo: this.serverInfo,
+            };
+            // process each service
+            for (let service of this.SERVICES) {
+                if (service.init) {
+                    result = service.init(result);
+                }
+            }
+            return result;
+        });
+    }
+    afterSetup() { }
+    beforeRegisterService() { }
+    afterRegisterService() {
+        // noop
     }
     inferCapabilities(capabilities) {
         this.hasCapability["configuration"] = !!(capabilities.workspace && !!capabilities.workspace.configuration);
@@ -18,81 +49,12 @@ class LanguageServer {
             capabilities.textDocument.publishDiagnostics &&
             capabilities.textDocument.publishDiagnostics.relatedInformation);
     }
-    listen() {
-        if (!this.finishedSetup) {
-            throw new Error("LanguageServer.setup() must be called before listen()");
-        }
+    listen(connection) {
+        this._connection = connection;
+        this.__setup();
         this.documents.listen(this.connection);
         this.connection.listen();
     }
-    static Create(options) {
-        const { serverInfo, services } = options;
-        return LanguageServer.Define({
-            props: { services },
-            beforeSetup: (server) => {
-                server.connection.onInitialize(({ capabilities }) => {
-                    server.inferCapabilities(capabilities);
-                    let result = {
-                        capabilities: {},
-                        serverInfo,
-                    };
-                    // process each service
-                    for (let service of services) {
-                        if (service.init) {
-                            result = service.init(result);
-                        }
-                    }
-                    return result;
-                });
-            },
-            handlers: services.map((s) => s.register),
-        });
-    }
-    static Define(defn) {
-        let { hasCapability = {}, settings = {}, props = {}, handlers = [], beforeSetup, afterSetup, beforeEachHandler, afterEachHandler, beforeListen, afterListen, } = defn;
-        return class extends LanguageServer {
-            constructor(connection) {
-                super(connection);
-                Object.assign(this.hasCapability, hasCapability);
-                Object.assign(this.settings, settings);
-                Object.assign(this, props);
-            }
-            setup() {
-                if (beforeSetup) {
-                    beforeSetup(this);
-                }
-                for (let i = 0; i < handlers.length; i++) {
-                    const handler = handlers[i];
-                    if (beforeEachHandler) {
-                        beforeEachHandler(this, handler, i);
-                    }
-                    handler(this);
-                    if (afterEachHandler) {
-                        afterEachHandler(this, handler, i);
-                    }
-                }
-                if (afterSetup) {
-                    afterSetup(this);
-                }
-                this.finishedSetup = true;
-            }
-            listen() {
-                if (beforeListen) {
-                    beforeListen(this);
-                }
-                super.listen();
-                if (afterListen) {
-                    afterListen(this);
-                }
-            }
-        };
-    }
 }
 exports.LanguageServer = LanguageServer;
-function startLanguageServer(serverConstructor, connection) {
-    const server = new serverConstructor(connection);
-    server.setup();
-    server.listen();
-}
-exports.startLanguageServer = startLanguageServer;
 //# sourceMappingURL=language-server.js.map
