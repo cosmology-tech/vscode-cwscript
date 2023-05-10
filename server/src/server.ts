@@ -56,7 +56,7 @@ export class CWScriptLanguageServer extends LanguageServer {
     });
   }
 
-  parseFile(uri: string, source: string) {
+  parseFile(uri: string, source: string): ParseCacheEntry {
     const textView = new TextView(source);
     const parser = new CWSParser(source);
     const ast = parser.parse();
@@ -68,6 +68,7 @@ export class CWScriptLanguageServer extends LanguageServer {
         listener.onParse(uri, ast, parser);
       }
     });
+    return { ast, parser, textView };
   }
 }
 

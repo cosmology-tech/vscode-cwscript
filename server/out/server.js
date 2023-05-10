@@ -51,6 +51,7 @@ class CWScriptLanguageServer extends language_server_1.LanguageServer {
                 listener.onParse(uri, ast, parser);
             }
         });
+        return { ast, parser, textView };
     }
 }
 exports.CWScriptLanguageServer = CWScriptLanguageServer;

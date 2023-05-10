@@ -183,13 +183,21 @@ exports.default = {
         // server.parserListeners.push((server, uri, ast, textView, parser) => {});
         server.connection.onDocumentSymbol((params) => {
             let cached = server.parseCache.get(params.textDocument.uri);
-            if (!cached || !cached.ast) {
-                // the parser has not yet parsed this file
-                return [];
+            if (!cached) {
+                // the parser has not yet parsed this file, we need to trigger
+                // a parse; in that case, the parserListener which updates the
+                // document symbols will be responsible instead of the request handler here.
+                // another scenario is the cached AST is invalid, so there are no
+                // new symbols to return, and we can only the symbols of the last
+                // successful program parse.
+                cached = server.parseFile(params.textDocument.uri, server.documents.get(params.textDocument.uri).getText());
             }
             let symbols = [];
             let { ast, textView } = cached;
-            // get all functions
+            if (!ast) {
+                // invalid syntax, no new symbols to return.
+                return symbols;
+            }
             // try to go through the SourceFile AST node, one item at a time
             // SourceFile is a List-type node, so the children are the top-level
             // statements in the file.
