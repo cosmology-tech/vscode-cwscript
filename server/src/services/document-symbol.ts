@@ -113,7 +113,7 @@ function structDefnSymbol(
     selectionRange = textView.rangeOfNode(name.$ctx!)!;
   }
   return {
-    name: name?.value || "{anonymous}",
+    name: name?.value || "(anon struct)",
     kind: SymbolKind.Struct,
     range: textView.rangeOfNode(node.$ctx!)!,
     selectionRange,
@@ -217,6 +217,18 @@ function getDocumentSymbolOfNode(
     .filter((c) => c !== undefined) as DocumentSymbol[];
 
   return docSymbol;
+}
+
+export function updateDocumentSymbols(
+  server: CWScriptLanguageServer,
+  uri: string,
+  ast: AST.AST,
+  textView: TextView
+) {
+  let docSymbol = getDocumentSymbolOfNode(ast, textView);
+  if (docSymbol) {
+    server.
+  }
 }
 
 export default {
