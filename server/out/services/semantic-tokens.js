@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const node_1 = require("vscode-languageserver/node");
 const cwsc_1 = require("@terran-one/cwsc");
 const position_1 = require("@terran-one/cwsc/dist/util/position");
+const language_service_1 = require("../language-service");
 // include all token types and modifiers
 const tokenTypesList = [
     "namespace",
@@ -76,23 +77,18 @@ function provideDocumentSemanticTokens(document) {
         return tb.build();
     }
 }
-exports.default = {
-    init(result) {
-        result.capabilities.semanticTokensProvider = {
-            range: false,
-            legend: LEGEND,
-            full: {
-                delta: false,
-            },
-        };
-        return result;
-    },
-    register(server) {
-        const { connection } = server;
-        connection.onRequest("textDocument/semanticTokens/full", (params) => {
-            let doc = server.documents.get(params.textDocument.uri);
-            return provideDocumentSemanticTokens(doc);
-        });
-    },
-};
+exports.default = (0, language_service_1.defineLanguageService)(function (result) {
+    result.capabilities.semanticTokensProvider = {
+        range: false,
+        legend: LEGEND,
+        full: {
+            delta: false,
+        },
+    };
+    this.connection.onRequest("textDocument/semanticTokens/full", (params) => {
+        let doc = this.documents.get(params.textDocument.uri);
+        return provideDocumentSemanticTokens(doc);
+    });
+    return result;
+});
 //# sourceMappingURL=semantic-tokens.js.map

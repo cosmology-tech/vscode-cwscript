@@ -1,23 +1,18 @@
-import { DiagnosticTag, InitializeResult } from "vscode-languageserver";
-import { LanguageServer } from "../util/language-server";
+import { DiagnosticTag } from "vscode-languageserver";
 import type { CWScriptLanguageServer } from "../server";
+import { defineLanguageService } from "../language-service";
 
-export default {
-  init(result: InitializeResult) {
-    // result.capabilities.diagnosticProvider = {
-    //   documentSelector: ["cwscript"],
-    //   interFileDependencies: false, // TODO: implement and flip to true
-    //   workspaceDiagnostics: false, // TODO: implement and flip to true
-    //   identifier: "cwscript-identifier",
-    //   id: "cwscript-id",
-    // };
-    return result;
-  },
-
-  register(server: CWScriptLanguageServer) {
-    const { connection, documents } = server;
-    server.parserListeners.push((uri, ast, parser) => {
-      connection.sendDiagnostics({ uri, diagnostics: parser.diagnostics });
-    });
-  },
-};
+export default defineLanguageService<CWScriptLanguageServer>(function(result) {
+  // result.capabilities.diagnosticProvider = {
+  //   documentSelector: ["cwscript"],
+  //   interFileDependencies: false, // TODO: implement and flip to true
+  //   workspaceDiagnostics: false, // TODO: implement and flip to true
+  //   identifier: "cwscript-identifier",
+  //   id: "cwscript-id",
+  // };
+  
+  this.parserListeners.push((uri, ast, parser) => {
+    this.connection.sendDiagnostics({ uri, diagnostics: parser.diagnostics });
+  });
+  return result;
+});

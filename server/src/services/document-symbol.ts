@@ -4,13 +4,14 @@ import {
   DocumentSymbol,
   Range,
 } from "vscode-languageserver";
-import { LanguageServer } from "../util/language-server";
-import type { CWScriptLanguageServer } from "../server";
+import { LanguageServer } from "../language-server";
+import { CWScriptLanguageServer } from "../server";
 import { AST } from "@terran-one/cwsc";
 import { TextView } from "@terran-one/cwsc/dist/util/position";
 import { EnumVariantUnitDefn } from "@terran-one/cwsc/dist/stdlib";
 import { InstantiateDefn } from "@terran-one/cwsc/dist/ast";
 import { InstantiateDefnContext } from "@terran-one/cwsc/dist/grammar/CWScriptParser";
+import { defineLanguageService } from "../language-service";
 
 function fnDefnSymbol(node: AST.FnDefn, textView: TextView): DocumentSymbol {
   let name = node.name;
@@ -219,65 +220,50 @@ function getDocumentSymbolOfNode(
   return docSymbol;
 }
 
-export function updateDocumentSymbols(
-  server: CWScriptLanguageServer,
-  uri: string,
-  ast: AST.AST,
-  textView: TextView
-) {
-  let docSymbol = getDocumentSymbolOfNode(ast, textView);
-  if (docSymbol) {
-    server.
-  }
-}
+export default defineLanguageService<CWScriptLanguageServer>(function(result) {
+  result.capabilities.documentSymbolProvider = true;
+  
+  // this.parserListeners.push((this, uri, ast, textView, parser) => {});
 
-export default {
-  init(result: InitializeResult) {
-    result.capabilities.documentSymbolProvider = true;
-    return result;
-  },
+  this.connection.onDocumentSymbol((params) => {
+    let cached = this.parseCache.get(params.textDocument.uri);
+    if (!cached) {
+      // the parser has not yet parsed this file, we need to trigger
+      // a parse; in that case, the parserListener which updates the
+      // document symbols will be responsible instead of the request handler here.
 
-  register(server: CWScriptLanguageServer) {
-    // server.parserListeners.push((server, uri, ast, textView, parser) => {});
+      // another scenario is the cached AST is invalid, so there are no
+      // new symbols to return, and we can only the symbols of the last
+      // successful program parse.
+      cached = this.parseFile(
+        params.textDocument.uri,
+        this.documents.get(params.textDocument.uri)!.getText()
+      );
+    }
 
-    server.connection.onDocumentSymbol((params) => {
-      let cached = server.parseCache.get(params.textDocument.uri);
-      if (!cached) {
-        // the parser has not yet parsed this file, we need to trigger
-        // a parse; in that case, the parserListener which updates the
-        // document symbols will be responsible instead of the request handler here.
-
-        // another scenario is the cached AST is invalid, so there are no
-        // new symbols to return, and we can only the symbols of the last
-        // successful program parse.
-        cached = server.parseFile(
-          params.textDocument.uri,
-          server.documents.get(params.textDocument.uri)!.getText()
-        );
-      }
-
-      let symbols: DocumentSymbol[] = [];
-      let { ast, textView } = cached;
-      if (!ast) {
-        // invalid syntax, no new symbols to return.
-        return symbols;
-      }
-
-      // try to go through the SourceFile AST node, one item at a time
-      // SourceFile is a List-type node, so the children are the top-level
-      // statements in the file.
-      for (let child of ast.children) {
-        // rather than doing all descendants, we can select just the immediate
-        // children of the SourceFile node, which are the top-level statements.
-        // we do not provide DocumentSymbols for statements typically.
-        // therefore, we can only get top level statements which are definitions.
-        // so I could potentially extract document symbols for just those.
-        let childSymbol = getDocumentSymbolOfNode(child, textView);
-        if (childSymbol) {
-          symbols.push(childSymbol);
-        }
-      }
+    let symbols: DocumentSymbol[] = [];
+    let { ast, textView } = cached;
+    if (!ast) {
+      // invalid syntax, no new symbols to return.
       return symbols;
-    });
-  },
-};
+    }
+
+    // try to go through the SourceFile AST node, one item at a time
+    // SourceFile is a List-type node, so the children are the top-level
+    // statements in the file.
+    for (let child of ast.children) {
+      // rather than doing all descendants, we can select just the immediate
+      // children of the SourceFile node, which are the top-level statements.
+      // we do not provide DocumentSymbols for statements typically.
+      // therefore, we can only get top level statements which are definitions.
+      // so I could potentially extract document symbols for just those.
+      let childSymbol = getDocumentSymbolOfNode(child, textView);
+      if (childSymbol) {
+        symbols.push(childSymbol);
+      }
+    }
+    return symbols;
+  });
+  
+  return result;
+});

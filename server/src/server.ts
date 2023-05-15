@@ -8,7 +8,8 @@ import {
   ProposedFeatures,
 } from "vscode-languageserver/node";
 
-import { LanguageServer, LanguageService } from "./util/language-server";
+import { LanguageServer } from "./language-server";
+import type { LanguageService } from "./language-service";
 import SemanticTokensService from "./services/semantic-tokens";
 import SignatureHelpService from "./services/signature-help";
 import DiagnosticsService from "./services/diagnostics";
@@ -33,22 +34,22 @@ export type ParserListenerObj = {
   onParse: ParserListenerFn;
 };
 export class CWScriptLanguageServer extends LanguageServer {
-  public parseCache: Map<string, ParseCacheEntry> = new Map();
-  public parserListeners: Array<ParserListenerFn | ParserListenerObj> = [];
   public SERVER_INFO = {
     name: "cwsls",
     version: "0.0.1",
   };
-
   public SERVICES: LanguageService<this>[] = [
     DiagnosticsService,
     DocumentSymbolService,
     SemanticTokensService,
     SignatureHelpService,
   ];
+  
+  public parseCache: Map<string, ParseCacheEntry> = new Map();
+  public parserListeners: Array<ParserListenerFn | ParserListenerObj> = [];
 
   setup() {
-    // initialiaze a parser cache
+    // initialize a parser cache
     this.documents.onDidChangeContent((change) => {
       const { uri } = change.document;
       const doc = this.documents.get(uri);
@@ -72,5 +73,6 @@ export class CWScriptLanguageServer extends LanguageServer {
   }
 }
 
-const cwsls = new CWScriptLanguageServer({ name: "cwsls", version: "0.0.1" });
+const cwsls = new CWScriptLanguageServer();
 cwsls.listen(connection);
+connection.listen();

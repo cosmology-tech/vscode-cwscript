@@ -7,9 +7,10 @@ import {
   SemanticTokensBuilder,
 } from "vscode-languageserver/node";
 import { TextDocument } from "vscode-languageserver-textdocument";
-import { LanguageServer, LanguageService } from "../util/language-server";
 import { AST, CWSParser } from "@terran-one/cwsc";
 import { TextView } from "@terran-one/cwsc/dist/util/position";
+import { defineLanguageService } from "../language-service";
+import type { CWScriptLanguageServer } from "../server";
 
 // include all token types and modifiers
 
@@ -140,23 +141,19 @@ function provideDocumentSemanticTokens(document: TextDocument): SemanticTokens {
   }
 }
 
-export default {
-  init(result: InitializeResult) {
-    result.capabilities.semanticTokensProvider = {
-      range: false,
-      legend: LEGEND,
-      full: {
-        delta: false,
-      },
-    };
-    return result;
-  },
-
-  register(server: LanguageServer) {
-    const { connection } = server;
-    connection.onRequest("textDocument/semanticTokens/full", (params) => {
-      let doc = server.documents.get(params.textDocument.uri);
-      return provideDocumentSemanticTokens(doc!);
-    });
-  },
-};
+export default defineLanguageService<CWScriptLanguageServer>(function(result) {
+  result.capabilities.semanticTokensProvider = {
+    range: false,
+    legend: LEGEND,
+    full: {
+      delta: false,
+    },
+  };
+  
+  this.connection.onRequest("textDocument/semanticTokens/full", (params) => {
+    let doc = this.documents.get(params.textDocument.uri);
+    return provideDocumentSemanticTokens(doc!);
+  });
+  
+  return result;
+});

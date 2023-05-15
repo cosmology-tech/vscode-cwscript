@@ -6,7 +6,7 @@ exports.CWScriptLanguageServer = void 0;
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
 const node_1 = require("vscode-languageserver/node");
-const language_server_1 = require("./util/language-server");
+const language_server_1 = require("./language-server");
 const semantic_tokens_1 = require("./services/semantic-tokens");
 const signature_help_1 = require("./services/signature-help");
 const diagnostics_1 = require("./services/diagnostics");
@@ -17,8 +17,6 @@ const connection = (0, node_1.createConnection)(node_1.ProposedFeatures.all);
 class CWScriptLanguageServer extends language_server_1.LanguageServer {
     constructor() {
         super(...arguments);
-        this.parseCache = new Map();
-        this.parserListeners = [];
         this.SERVER_INFO = {
             name: "cwsls",
             version: "0.0.1",
@@ -29,9 +27,11 @@ class CWScriptLanguageServer extends language_server_1.LanguageServer {
             semantic_tokens_1.default,
             signature_help_1.default,
         ];
+        this.parseCache = new Map();
+        this.parserListeners = [];
     }
     setup() {
-        // initialiaze a parser cache
+        // initialize a parser cache
         this.documents.onDidChangeContent((change) => {
             const { uri } = change.document;
             const doc = this.documents.get(uri);
@@ -55,6 +55,7 @@ class CWScriptLanguageServer extends language_server_1.LanguageServer {
     }
 }
 exports.CWScriptLanguageServer = CWScriptLanguageServer;
-const cwsls = new CWScriptLanguageServer({ name: "cwsls", version: "0.0.1" });
+const cwsls = new CWScriptLanguageServer();
 cwsls.listen(connection);
+connection.listen();
 //# sourceMappingURL=server.js.map

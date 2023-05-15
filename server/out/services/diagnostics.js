@@ -1,21 +1,17 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.default = {
-    init(result) {
-        // result.capabilities.diagnosticProvider = {
-        //   documentSelector: ["cwscript"],
-        //   interFileDependencies: false, // TODO: implement and flip to true
-        //   workspaceDiagnostics: false, // TODO: implement and flip to true
-        //   identifier: "cwscript-identifier",
-        //   id: "cwscript-id",
-        // };
-        return result;
-    },
-    register(server) {
-        const { connection, documents } = server;
-        server.parserListeners.push((uri, ast, parser) => {
-            connection.sendDiagnostics({ uri, diagnostics: parser.diagnostics });
-        });
-    },
-};
+const language_service_1 = require("../language-service");
+exports.default = (0, language_service_1.defineLanguageService)(function (result) {
+    // result.capabilities.diagnosticProvider = {
+    //   documentSelector: ["cwscript"],
+    //   interFileDependencies: false, // TODO: implement and flip to true
+    //   workspaceDiagnostics: false, // TODO: implement and flip to true
+    //   identifier: "cwscript-identifier",
+    //   id: "cwscript-id",
+    // };
+    this.parserListeners.push((uri, ast, parser) => {
+        this.connection.sendDiagnostics({ uri, diagnostics: parser.diagnostics });
+    });
+    return result;
+});
 //# sourceMappingURL=diagnostics.js.map
