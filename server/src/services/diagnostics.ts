@@ -11,8 +11,11 @@ export default defineLanguageService<CWScriptLanguageServer>(function(result) {
   //   id: "cwscript-id",
   // };
   
-  this.parserListeners.push((uri, ast, parser) => {
-    this.connection.sendDiagnostics({ uri, diagnostics: parser.diagnostics });
+  this.parserListeners.push((parseEntry) => {
+    if (parseEntry.status === 'success') {
+      const { uri, parser } = parseEntry;
+      this.connection.sendDiagnostics({ uri, diagnostics: parser.diagnostics });
+    }
   });
   return result;
 });

@@ -1,19 +1,19 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const vscode_languageserver_1 = require("vscode-languageserver");
 const cwsc_1 = require("@terran-one/cwsc");
+const vscode_languageserver_1 = require("vscode-languageserver");
 const language_service_1 = require("../language-service");
 const documentSymbolRegistry = new Map();
 function registerExtractor(nodeType, extractor) {
     documentSymbolRegistry.set(nodeType, extractor);
 }
-function defineExtractor({ getName = (node) => node.name, getKind, getSelectionRange = (node, textView) => textView.rangeOfNode(node.$ctx), getDetail, }) {
+function defineExtractor({ getName = (node) => node.name?.value, getKind, getSelectionRange = (node, textView) => textView.rangeOfNode(node.$ctx), getDetail, }) {
     return (node, textView) => ({
         name: getName(node),
         kind: getKind(node),
-        range: getSelectionRange(node, textView),
+        range: textView.rangeOfNode(node.$ctx),
         selectionRange: getSelectionRange(node, textView),
-        detail: getDetail?.(node),
+        detail: getDetail?.(node) ?? '',
     });
 }
 registerExtractor(cwsc_1.AST.FnDefn, defineExtractor({
@@ -65,51 +65,40 @@ registerExtractor(cwsc_1.AST.EnumVariantStruct, defineExtractor({
 registerExtractor(cwsc_1.AST.EnumVariantUnit, defineExtractor({
     getKind: () => vscode_languageserver_1.SymbolKind.EnumMember,
 }));
-function getDocumentSymbolOfNode(node, textView) {
-    const extractor = documentSymbolRegistry.get(node.constructor);
-    if (!extractor)
-        return;
-    const docSymbol = extractor(node, textView);
-    docSymbol.children = node.descendants
-        .map(c => getDocumentSymbolOfNode(c, textView))
-        .filter(c => !!c);
-    return docSymbol;
-}
 exports.default = (0, language_service_1.defineLanguageService)(function (result) {
     result.capabilities.documentSymbolProvider = true;
-    // this.parserListeners.push((this, uri, ast, textView, parser) => {});
     this.connection.onDocumentSymbol((params) => {
-        let cached = this.parseCache.get(params.textDocument.uri);
-        if (!cached) {
-            // the parser has not yet parsed this file, we need to trigger
-            // a parse; in that case, the parserListener which updates the
-            // document symbols will be responsible instead of the request handler here.
-            // another scenario is the cached AST is invalid, so there are no
-            // new symbols to return, and we can only the symbols of the last
-            // successful program parse.
-            cached = this.parseFile(params.textDocument.uri, this.documents.get(params.textDocument.uri).getText());
+        let cached = this.getCachedOrParse(params.textDocument.uri);
+        if (!cached)
+            return [];
+        let parseEntry;
+        if (cached.status === 'error') {
+            if (!cached.previous)
+                return [];
+            parseEntry = cached.previous;
         }
-        let symbols = [];
-        let { ast, textView } = cached;
-        if (!ast) {
-            // invalid syntax, no new symbols to return.
+        else {
+            parseEntry = cached;
+        }
+        const { ast, textView } = parseEntry;
+        return getDocumentSymbols(ast, textView);
+        function getDocumentSymbols(root, textView) {
+            const symbols = [];
+            const process = (node) => {
+                const extractor = documentSymbolRegistry.get(node.constructor);
+                if (extractor) {
+                    const docSymbol = extractor(node, textView);
+                    docSymbol.children = node.descendants.map(process).filter(c => !!c);
+                    symbols.push(docSymbol);
+                    return docSymbol;
+                }
+                else {
+                    node.descendants.forEach(process);
+                }
+            };
+            process(ast);
             return symbols;
         }
-        // try to go through the SourceFile AST node, one item at a time
-        // SourceFile is a List-type node, so the children are the top-level
-        // statements in the file.
-        for (let child of ast.children) {
-            // rather than doing all descendants, we can select just the immediate
-            // children of the SourceFile node, which are the top-level statements.
-            // we do not provide DocumentSymbols for statements typically.
-            // therefore, we can only get top level statements which are definitions.
-            // so I could potentially extract document symbols for just those.
-            let childSymbol = getDocumentSymbolOfNode(child, textView);
-            if (childSymbol) {
-                symbols.push(childSymbol);
-            }
-        }
-        return symbols;
     });
     return result;
 });

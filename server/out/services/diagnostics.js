@@ -9,8 +9,11 @@ exports.default = (0, language_service_1.defineLanguageService)(function (result
     //   identifier: "cwscript-identifier",
     //   id: "cwscript-id",
     // };
-    this.parserListeners.push((uri, ast, parser) => {
-        this.connection.sendDiagnostics({ uri, diagnostics: parser.diagnostics });
+    this.parserListeners.push((parseEntry) => {
+        if (parseEntry.status === 'success') {
+            const { uri, parser } = parseEntry;
+            this.connection.sendDiagnostics({ uri, diagnostics: parser.diagnostics });
+        }
     });
     return result;
 });

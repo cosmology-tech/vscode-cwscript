@@ -1,17 +1,13 @@
+import { AST } from "@terran-one/cwsc";
+import { TextView } from "@terran-one/cwsc/dist/util/position";
+import { InstantiateDefnContext } from "@terran-one/cwsc/dist/grammar/CWScriptParser";
 import {
-  InitializeResult,
   SymbolKind,
   DocumentSymbol,
   Range,
 } from "vscode-languageserver";
-import { LanguageServer } from "../language-server";
-import { CWScriptLanguageServer } from "../server";
-import { AST } from "@terran-one/cwsc";
-import { TextView } from "@terran-one/cwsc/dist/util/position";
-import { EnumVariantUnitDefn } from "@terran-one/cwsc/dist/stdlib";
-import { InstantiateDefn } from "@terran-one/cwsc/dist/ast";
-import { InstantiateDefnContext } from "@terran-one/cwsc/dist/grammar/CWScriptParser";
 import { defineLanguageService } from "../language-service";
+import { CWScriptLanguageServer, ParseCacheEntrySuccess } from "../server";
 
 interface Constructor<T extends AST.AST> {
   new (...args: any[]): T;
@@ -37,7 +33,7 @@ function registerExtractor<T extends AST.AST>(
 }
 
 function defineExtractor<T extends AST.AST>({
-  getName = (node) => (node as any).name,
+  getName = (node) => (node as any).name?.value,
   getKind,
   getSelectionRange = (node, textView) => textView.rangeOfNode(node.$ctx!)!,
   getDetail,
@@ -45,9 +41,9 @@ function defineExtractor<T extends AST.AST>({
   return (node: T, textView: TextView) => ({
     name: getName(node),
     kind: getKind(node),
-    range: getSelectionRange(node, textView),
+    range: textView.rangeOfNode(node.$ctx!)!,
     selectionRange: getSelectionRange(node, textView),
-    detail: getDetail?.(node),
+    detail: getDetail?.(node) ?? '',
   });
 }
 
@@ -111,65 +107,39 @@ registerExtractor(AST.EnumVariantUnit, defineExtractor({
   getKind: () => SymbolKind.EnumMember,
 }));
 
-function getDocumentSymbolOfNode(
-  node: AST.AST,
-  textView: TextView
-): DocumentSymbol | undefined {
-  const extractor = documentSymbolRegistry.get(node.constructor as any);
-  if (!extractor) return;
-  
-  const docSymbol = extractor(node, textView);
-
-  docSymbol.children = node.descendants
-    .map(c => getDocumentSymbolOfNode(c, textView))
-    .filter(c => !!c) as DocumentSymbol[];
-
-  return docSymbol;
-}
-
 export default defineLanguageService<CWScriptLanguageServer>(function(result) {
   result.capabilities.documentSymbolProvider = true;
-  
-  // this.parserListeners.push((this, uri, ast, textView, parser) => {});
 
   this.connection.onDocumentSymbol((params) => {
-    let cached = this.parseCache.get(params.textDocument.uri);
-    if (!cached) {
-      // the parser has not yet parsed this file, we need to trigger
-      // a parse; in that case, the parserListener which updates the
-      // document symbols will be responsible instead of the request handler here.
-
-      // another scenario is the cached AST is invalid, so there are no
-      // new symbols to return, and we can only the symbols of the last
-      // successful program parse.
-      cached = this.parseFile(
-        params.textDocument.uri,
-        this.documents.get(params.textDocument.uri)!.getText()
-      );
+    let cached = this.getCachedOrParse(params.textDocument.uri);
+    if (!cached) return [];
+    
+    let parseEntry: ParseCacheEntrySuccess;
+    if (cached.status === 'error') {
+      if (!cached.previous) return [];
+      parseEntry = cached.previous;
+    } else {
+      parseEntry = cached;
     }
-
-    let symbols: DocumentSymbol[] = [];
-    let { ast, textView } = cached;
-    if (!ast) {
-      // invalid syntax, no new symbols to return.
+    const { ast, textView } = parseEntry;
+    return getDocumentSymbols(ast, textView);
+    
+    function getDocumentSymbols(root: AST.SourceFile, textView: TextView): DocumentSymbol[] {
+      const symbols: DocumentSymbol[] = [];
+      const process = (node: AST.AST) => {
+        const extractor = documentSymbolRegistry.get(node.constructor as any);
+        if (extractor) {
+          const docSymbol = extractor(node, textView);
+          docSymbol.children = node.descendants.map(process).filter(c => !!c) as DocumentSymbol[];
+          symbols.push(docSymbol);
+          return docSymbol;
+        } else {
+          node.descendants.forEach(process);
+        }
+      }
+      process(ast);
       return symbols;
     }
-
-    // try to go through the SourceFile AST node, one item at a time
-    // SourceFile is a List-type node, so the children are the top-level
-    // statements in the file.
-    for (let child of ast.children) {
-      // rather than doing all descendants, we can select just the immediate
-      // children of the SourceFile node, which are the top-level statements.
-      // we do not provide DocumentSymbols for statements typically.
-      // therefore, we can only get top level statements which are definitions.
-      // so I could potentially extract document symbols for just those.
-      let childSymbol = getDocumentSymbolOfNode(child, textView);
-      if (childSymbol) {
-        symbols.push(childSymbol);
-      }
-    }
-    return symbols;
   });
   
   return result;

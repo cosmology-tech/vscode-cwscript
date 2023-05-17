@@ -34,24 +34,43 @@ class CWScriptLanguageServer extends language_server_1.LanguageServer {
         // initialize a parser cache
         this.documents.onDidChangeContent((change) => {
             const { uri } = change.document;
-            const doc = this.documents.get(uri);
-            this.parseFile(uri, doc.getText());
+            const source = this.documents.get(uri)?.getText();
+            if (source)
+                this.parseFile(uri, source);
         });
     }
+    getCachedOrParse(uri) {
+        if (this.parseCache.has(uri))
+            return this.parseCache.get(uri);
+        const source = this.documents.get(uri)?.getText();
+        if (source)
+            return this.parseFile(uri, source);
+    }
     parseFile(uri, source) {
-        const textView = new position_1.TextView(source);
-        const parser = new cwsc_1.CWSParser(source);
-        const ast = parser.parse();
-        this.parseCache.set(uri, { ast, parser, textView });
-        this.parserListeners.forEach((listener) => {
-            if (typeof listener === "function") {
-                listener(uri, ast, parser);
-            }
-            else {
-                listener.onParse(uri, ast, parser);
-            }
-        });
-        return { ast, parser, textView };
+        try {
+            const textView = new position_1.TextView(source);
+            const parser = new cwsc_1.CWSParser(source);
+            const ast = parser.parse();
+            const entry = { status: 'success', uri, textView, ast, parser };
+            this.parseCache.set(uri, entry);
+            this.parserListeners.forEach((listener) => {
+                if (typeof listener === "function") {
+                    listener(entry);
+                }
+                else {
+                    listener.onParse(entry);
+                }
+            });
+            return entry;
+        }
+        catch (e) {
+            return {
+                status: 'error',
+                uri,
+                previous: this.parseCache.get(uri),
+                error: e,
+            };
+        }
     }
 }
 exports.CWScriptLanguageServer = CWScriptLanguageServer;
