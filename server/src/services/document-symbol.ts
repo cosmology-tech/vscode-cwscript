@@ -13,209 +13,116 @@ import { InstantiateDefn } from "@terran-one/cwsc/dist/ast";
 import { InstantiateDefnContext } from "@terran-one/cwsc/dist/grammar/CWScriptParser";
 import { defineLanguageService } from "../language-service";
 
-function fnDefnSymbol(node: AST.FnDefn, textView: TextView): DocumentSymbol {
-  let name = node.name;
-  let selectionRange = textView.rangeOfNode(name.$ctx!)!;
-  return {
-    name: name.value,
-    kind: SymbolKind.Function,
-    range: textView.rangeOfNode(node.$ctx!)!,
-    selectionRange,
-    detail: "function detail",
-  };
+interface Constructor<T extends AST.AST> {
+  new (...args: any[]): T;
+  prototype: Object;
 }
 
-function instantiateDefnSymbol(
-  node: AST.InstantiateDefn,
-  textView: TextView
-): DocumentSymbol {
-  let name = "#instantiate";
-  let { a, b } = (node.$ctx as InstantiateDefnContext).INSTANTIATE()!
-    .sourceInterval!;
-  let selectionRange = textView.range(a, b)!;
-  return {
-    name: name,
-    kind: SymbolKind.Method,
-    range: textView.rangeOfNode(node.$ctx!)!,
-    selectionRange,
-    detail: "instantiate detail",
-  };
+interface DocumentSymbolExtractorArgs<T extends AST.AST> {
+  getName?(node: T): string;
+  getKind(node: T): SymbolKind;
+  getSelectionRange?(node: T, textView: TextView): Range;
+  getDetail?(node: T): string;
 }
 
-function execDefnSymbol(
-  node: AST.ExecDefn,
-  textView: TextView
-): DocumentSymbol {
-  let name = node.name;
-  let selectionRange = textView.rangeOfNode(name.$ctx!)!;
-  return {
-    name: name.value,
-    kind: SymbolKind.Method,
-    range: textView.rangeOfNode(node.$ctx!)!,
-    selectionRange,
-    detail: "exec detail",
-  };
+type DocumentSymbolExtractor<T extends AST.AST = AST.AST> = (node: T, textView: TextView) => DocumentSymbol;
+
+const documentSymbolRegistry = new Map<Constructor<any>, DocumentSymbolExtractor<any>>();
+
+function registerExtractor<T extends AST.AST>(
+  nodeType: Constructor<T>,
+  extractor: DocumentSymbolExtractor<T>,
+) {
+  documentSymbolRegistry.set(nodeType, extractor);
 }
 
-function queryDefnSymbol(
-  node: AST.QueryDefn,
-  textView: TextView
-): DocumentSymbol {
-  let name = node.name;
-  let selectionRange = textView.rangeOfNode(name.$ctx!)!;
-  return {
-    name: name.value,
-    kind: SymbolKind.Method,
-    range: textView.rangeOfNode(node.$ctx!)!,
-    selectionRange,
-    detail: "query detail",
-  };
+function defineExtractor<T extends AST.AST>({
+  getName = (node) => (node as any).name,
+  getKind,
+  getSelectionRange = (node, textView) => textView.rangeOfNode(node.$ctx!)!,
+  getDetail,
+}: DocumentSymbolExtractorArgs<T>) {
+  return (node: T, textView: TextView) => ({
+    name: getName(node),
+    kind: getKind(node),
+    range: getSelectionRange(node, textView),
+    selectionRange: getSelectionRange(node, textView),
+    detail: getDetail?.(node),
+  });
 }
 
-function contractDefnSymbol(
-  node: AST.ContractDefn,
-  textView: TextView
-): DocumentSymbol {
-  let name = node.name;
-  let selectionRange = textView.rangeOfNode(name.$ctx!)!;
-  return {
-    name: name.value,
-    kind: SymbolKind.Class,
-    range: textView.rangeOfNode(node.$ctx!)!,
-    selectionRange,
-    detail: "contract detail",
-  };
-}
+registerExtractor(AST.FnDefn, defineExtractor({
+  getKind: () => SymbolKind.Function,
+}));
 
-function interfaceDefnSymbol(
-  node: AST.InterfaceDefn,
-  textView: TextView
-): DocumentSymbol {
-  let name = node.name;
-  let selectionRange = textView.rangeOfNode(name.$ctx!)!;
-  return {
-    name: name.value,
-    kind: SymbolKind.Interface,
-    range: textView.rangeOfNode(node.$ctx!)!,
-    selectionRange,
-    detail: "interface detail",
-  };
-}
+registerExtractor(AST.InstantiateDefn, defineExtractor({
+  getKind: () => SymbolKind.Method,
+  getSelectionRange: (node, textView) => {
+    const {a, b} = (node.$ctx as InstantiateDefnContext).INSTANTIATE()!.sourceInterval!;
+    return textView.range(a, b)!;
+  },
+}));
 
-function structDefnSymbol(
-  node: AST.StructDefn,
-  textView: TextView
-): DocumentSymbol {
-  let name = node.name;
-  let selectionRange: Range;
-  if (!name) {
-    selectionRange = textView.rangeOfNode(node.$ctx!)!;
-  } else {
-    selectionRange = textView.rangeOfNode(name.$ctx!)!;
-  }
-  return {
-    name: name?.value || "(anon struct)",
-    kind: SymbolKind.Struct,
-    range: textView.rangeOfNode(node.$ctx!)!,
-    selectionRange,
-    detail: "struct detail",
-  };
-}
+registerExtractor(AST.ExecDefn, defineExtractor({
+  getKind: () => SymbolKind.Method,
+}));
 
-function enumDefnSymbol(
-  node: AST.EnumDefn,
-  textView: TextView
-): DocumentSymbol {
-  let name = node.name;
-  let selectionRange = textView.rangeOfNode(name.$ctx!)!;
-  return {
-    name: name.value,
-    kind: SymbolKind.Enum,
-    range: textView.rangeOfNode(node.$ctx!)!,
-    selectionRange,
-    detail: "enum detail",
-  };
-}
+registerExtractor(AST.QueryDefn, defineExtractor({
+  getKind: () => SymbolKind.Method,
+}));
 
-function typeAliasDefnSymbol(
-  node: AST.TypeAliasDefn,
-  textView: TextView
-): DocumentSymbol {
-  let name = node.name;
-  let selectionRange = textView.rangeOfNode(name.$ctx!)!;
-  return {
-    name: name.value,
-    kind: SymbolKind.TypeParameter,
-    range: textView.rangeOfNode(node.$ctx!)!,
-    selectionRange,
-    detail: "type alias detail",
-  };
-}
+registerExtractor(AST.ContractDefn, defineExtractor({
+  getKind: () => SymbolKind.Class,
+}));
 
-function paramSymbol(node: AST.Param, textView: TextView): DocumentSymbol {
-  let name = node.name;
-  let selectionRange = textView.rangeOfNode(name.$ctx!)!;
-  return {
-    name: name.value,
-    kind: SymbolKind.Variable,
-    range: textView.rangeOfNode(node.$ctx!)!,
-    selectionRange,
-    detail: "param detail",
-  };
-}
+registerExtractor(AST.InterfaceDefn, defineExtractor({
+  getKind: () => SymbolKind.Interface,
+}));
 
-function enumVariantDefnSymbol(
-  node: AST.EnumVariantStruct | AST.EnumVariantUnit,
-  textView: TextView
-): DocumentSymbol {
-  let name = node.name;
-  let selectionRange = textView.rangeOfNode(name.$ctx!)!;
-  return {
-    name: name.value,
-    kind: SymbolKind.EnumMember,
-    range: textView.rangeOfNode(node.$ctx!)!,
-    selectionRange,
-    detail: "enum variant detail",
-  };
-}
+registerExtractor(AST.StructDefn, defineExtractor({
+  getKind: () => SymbolKind.Struct,
+  getSelectionRange: (node, textView) => {
+    const name = node.name;
+    if (!name) {
+      return textView.rangeOfNode(node.$ctx!)!;
+    } else {
+      return textView.rangeOfNode(name.$ctx!)!;
+    }
+  },
+}));
+
+registerExtractor(AST.EnumDefn, defineExtractor({
+  getKind: () => SymbolKind.Enum,
+}));
+
+registerExtractor(AST.TypeAliasDefn, defineExtractor({
+  getKind: () => SymbolKind.TypeParameter,
+}));
+
+registerExtractor(AST.Param, defineExtractor({
+  getKind: () => SymbolKind.Variable,
+}));
+
+registerExtractor(AST.EnumVariantStruct, defineExtractor({
+  getKind: () => SymbolKind.EnumMember,
+}));
+
+registerExtractor(AST.EnumVariantUnit, defineExtractor({
+  getKind: () => SymbolKind.EnumMember,
+}));
 
 function getDocumentSymbolOfNode(
   node: AST.AST,
   textView: TextView
 ): DocumentSymbol | undefined {
-  let docSymbol: DocumentSymbol;
-  if (node instanceof AST.FnDefn) {
-    docSymbol = fnDefnSymbol(node, textView);
-  } else if (node instanceof AST.InstantiateDefn) {
-    docSymbol = instantiateDefnSymbol(node, textView);
-  } else if (node instanceof AST.ExecDefn) {
-    docSymbol = execDefnSymbol(node, textView);
-  } else if (node instanceof AST.QueryDefn) {
-    docSymbol = queryDefnSymbol(node, textView);
-  } else if (node instanceof AST.ContractDefn) {
-    docSymbol = contractDefnSymbol(node, textView);
-  } else if (node instanceof AST.InterfaceDefn) {
-    docSymbol = interfaceDefnSymbol(node, textView);
-  } else if (node instanceof AST.StructDefn) {
-    docSymbol = structDefnSymbol(node, textView);
-  } else if (node instanceof AST.EnumDefn) {
-    docSymbol = enumDefnSymbol(node, textView);
-  } else if (
-    node instanceof AST.EnumVariantStruct ||
-    node instanceof AST.EnumVariantUnit
-  ) {
-    docSymbol = enumVariantDefnSymbol(node, textView);
-  } else if (node instanceof AST.TypeAliasDefn) {
-    docSymbol = typeAliasDefnSymbol(node, textView);
-  } else {
-    return;
-  }
+  const extractor = documentSymbolRegistry.get(node.constructor as any);
+  if (!extractor) return;
+  
+  const docSymbol = extractor(node, textView);
 
   docSymbol.children = node.descendants
-    .map((child) => {
-      return getDocumentSymbolOfNode(child, textView);
-    })
-    .filter((c) => c !== undefined) as DocumentSymbol[];
+    .map(c => getDocumentSymbolOfNode(c, textView))
+    .filter(c => !!c) as DocumentSymbol[];
 
   return docSymbol;
 }

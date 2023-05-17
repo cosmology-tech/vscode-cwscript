@@ -3,176 +3,76 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const vscode_languageserver_1 = require("vscode-languageserver");
 const cwsc_1 = require("@terran-one/cwsc");
 const language_service_1 = require("../language-service");
-function fnDefnSymbol(node, textView) {
-    let name = node.name;
-    let selectionRange = textView.rangeOfNode(name.$ctx);
-    return {
-        name: name.value,
-        kind: vscode_languageserver_1.SymbolKind.Function,
-        range: textView.rangeOfNode(node.$ctx),
-        selectionRange,
-        detail: "function detail",
-    };
+const documentSymbolRegistry = new Map();
+function registerExtractor(nodeType, extractor) {
+    documentSymbolRegistry.set(nodeType, extractor);
 }
-function instantiateDefnSymbol(node, textView) {
-    let name = "#instantiate";
-    let { a, b } = node.$ctx.INSTANTIATE()
-        .sourceInterval;
-    let selectionRange = textView.range(a, b);
-    return {
-        name: name,
-        kind: vscode_languageserver_1.SymbolKind.Method,
-        range: textView.rangeOfNode(node.$ctx),
-        selectionRange,
-        detail: "instantiate detail",
-    };
+function defineExtractor({ getName = (node) => node.name, getKind, getSelectionRange = (node, textView) => textView.rangeOfNode(node.$ctx), getDetail, }) {
+    return (node, textView) => ({
+        name: getName(node),
+        kind: getKind(node),
+        range: getSelectionRange(node, textView),
+        selectionRange: getSelectionRange(node, textView),
+        detail: getDetail?.(node),
+    });
 }
-function execDefnSymbol(node, textView) {
-    let name = node.name;
-    let selectionRange = textView.rangeOfNode(name.$ctx);
-    return {
-        name: name.value,
-        kind: vscode_languageserver_1.SymbolKind.Method,
-        range: textView.rangeOfNode(node.$ctx),
-        selectionRange,
-        detail: "exec detail",
-    };
-}
-function queryDefnSymbol(node, textView) {
-    let name = node.name;
-    let selectionRange = textView.rangeOfNode(name.$ctx);
-    return {
-        name: name.value,
-        kind: vscode_languageserver_1.SymbolKind.Method,
-        range: textView.rangeOfNode(node.$ctx),
-        selectionRange,
-        detail: "query detail",
-    };
-}
-function contractDefnSymbol(node, textView) {
-    let name = node.name;
-    let selectionRange = textView.rangeOfNode(name.$ctx);
-    return {
-        name: name.value,
-        kind: vscode_languageserver_1.SymbolKind.Class,
-        range: textView.rangeOfNode(node.$ctx),
-        selectionRange,
-        detail: "contract detail",
-    };
-}
-function interfaceDefnSymbol(node, textView) {
-    let name = node.name;
-    let selectionRange = textView.rangeOfNode(name.$ctx);
-    return {
-        name: name.value,
-        kind: vscode_languageserver_1.SymbolKind.Interface,
-        range: textView.rangeOfNode(node.$ctx),
-        selectionRange,
-        detail: "interface detail",
-    };
-}
-function structDefnSymbol(node, textView) {
-    let name = node.name;
-    let selectionRange;
-    if (!name) {
-        selectionRange = textView.rangeOfNode(node.$ctx);
-    }
-    else {
-        selectionRange = textView.rangeOfNode(name.$ctx);
-    }
-    return {
-        name: name?.value || "{anonymous}",
-        kind: vscode_languageserver_1.SymbolKind.Struct,
-        range: textView.rangeOfNode(node.$ctx),
-        selectionRange,
-        detail: "struct detail",
-    };
-}
-function enumDefnSymbol(node, textView) {
-    let name = node.name;
-    let selectionRange = textView.rangeOfNode(name.$ctx);
-    return {
-        name: name.value,
-        kind: vscode_languageserver_1.SymbolKind.Enum,
-        range: textView.rangeOfNode(node.$ctx),
-        selectionRange,
-        detail: "enum detail",
-    };
-}
-function typeAliasDefnSymbol(node, textView) {
-    let name = node.name;
-    let selectionRange = textView.rangeOfNode(name.$ctx);
-    return {
-        name: name.value,
-        kind: vscode_languageserver_1.SymbolKind.TypeParameter,
-        range: textView.rangeOfNode(node.$ctx),
-        selectionRange,
-        detail: "type alias detail",
-    };
-}
-function paramSymbol(node, textView) {
-    let name = node.name;
-    let selectionRange = textView.rangeOfNode(name.$ctx);
-    return {
-        name: name.value,
-        kind: vscode_languageserver_1.SymbolKind.Variable,
-        range: textView.rangeOfNode(node.$ctx),
-        selectionRange,
-        detail: "param detail",
-    };
-}
-function enumVariantDefnSymbol(node, textView) {
-    let name = node.name;
-    let selectionRange = textView.rangeOfNode(name.$ctx);
-    return {
-        name: name.value,
-        kind: vscode_languageserver_1.SymbolKind.EnumMember,
-        range: textView.rangeOfNode(node.$ctx),
-        selectionRange,
-        detail: "enum variant detail",
-    };
-}
+registerExtractor(cwsc_1.AST.FnDefn, defineExtractor({
+    getKind: () => vscode_languageserver_1.SymbolKind.Function,
+}));
+registerExtractor(cwsc_1.AST.InstantiateDefn, defineExtractor({
+    getKind: () => vscode_languageserver_1.SymbolKind.Method,
+    getSelectionRange: (node, textView) => {
+        const { a, b } = node.$ctx.INSTANTIATE().sourceInterval;
+        return textView.range(a, b);
+    },
+}));
+registerExtractor(cwsc_1.AST.ExecDefn, defineExtractor({
+    getKind: () => vscode_languageserver_1.SymbolKind.Method,
+}));
+registerExtractor(cwsc_1.AST.QueryDefn, defineExtractor({
+    getKind: () => vscode_languageserver_1.SymbolKind.Method,
+}));
+registerExtractor(cwsc_1.AST.ContractDefn, defineExtractor({
+    getKind: () => vscode_languageserver_1.SymbolKind.Class,
+}));
+registerExtractor(cwsc_1.AST.InterfaceDefn, defineExtractor({
+    getKind: () => vscode_languageserver_1.SymbolKind.Interface,
+}));
+registerExtractor(cwsc_1.AST.StructDefn, defineExtractor({
+    getKind: () => vscode_languageserver_1.SymbolKind.Struct,
+    getSelectionRange: (node, textView) => {
+        const name = node.name;
+        if (!name) {
+            return textView.rangeOfNode(node.$ctx);
+        }
+        else {
+            return textView.rangeOfNode(name.$ctx);
+        }
+    },
+}));
+registerExtractor(cwsc_1.AST.EnumDefn, defineExtractor({
+    getKind: () => vscode_languageserver_1.SymbolKind.Enum,
+}));
+registerExtractor(cwsc_1.AST.TypeAliasDefn, defineExtractor({
+    getKind: () => vscode_languageserver_1.SymbolKind.TypeParameter,
+}));
+registerExtractor(cwsc_1.AST.Param, defineExtractor({
+    getKind: () => vscode_languageserver_1.SymbolKind.Variable,
+}));
+registerExtractor(cwsc_1.AST.EnumVariantStruct, defineExtractor({
+    getKind: () => vscode_languageserver_1.SymbolKind.EnumMember,
+}));
+registerExtractor(cwsc_1.AST.EnumVariantUnit, defineExtractor({
+    getKind: () => vscode_languageserver_1.SymbolKind.EnumMember,
+}));
 function getDocumentSymbolOfNode(node, textView) {
-    let docSymbol;
-    if (node instanceof cwsc_1.AST.FnDefn) {
-        docSymbol = fnDefnSymbol(node, textView);
-    }
-    else if (node instanceof cwsc_1.AST.InstantiateDefn) {
-        docSymbol = instantiateDefnSymbol(node, textView);
-    }
-    else if (node instanceof cwsc_1.AST.ExecDefn) {
-        docSymbol = execDefnSymbol(node, textView);
-    }
-    else if (node instanceof cwsc_1.AST.QueryDefn) {
-        docSymbol = queryDefnSymbol(node, textView);
-    }
-    else if (node instanceof cwsc_1.AST.ContractDefn) {
-        docSymbol = contractDefnSymbol(node, textView);
-    }
-    else if (node instanceof cwsc_1.AST.InterfaceDefn) {
-        docSymbol = interfaceDefnSymbol(node, textView);
-    }
-    else if (node instanceof cwsc_1.AST.StructDefn) {
-        docSymbol = structDefnSymbol(node, textView);
-    }
-    else if (node instanceof cwsc_1.AST.EnumDefn) {
-        docSymbol = enumDefnSymbol(node, textView);
-    }
-    else if (node instanceof cwsc_1.AST.EnumVariantStruct ||
-        node instanceof cwsc_1.AST.EnumVariantUnit) {
-        docSymbol = enumVariantDefnSymbol(node, textView);
-    }
-    else if (node instanceof cwsc_1.AST.TypeAliasDefn) {
-        docSymbol = typeAliasDefnSymbol(node, textView);
-    }
-    else {
+    const extractor = documentSymbolRegistry.get(node.constructor);
+    if (!extractor)
         return;
-    }
+    const docSymbol = extractor(node, textView);
     docSymbol.children = node.descendants
-        .map((child) => {
-        return getDocumentSymbolOfNode(child, textView);
-    })
-        .filter((c) => c !== undefined);
+        .map(c => getDocumentSymbolOfNode(c, textView))
+        .filter(c => !!c);
     return docSymbol;
 }
 exports.default = (0, language_service_1.defineLanguageService)(function (result) {
