@@ -67,6 +67,50 @@ const LEGEND = {
   tokenModifiers: tokenModifiersList,
 };
 
+interface SemanticTokenEntry {
+  line: number;
+  character: number;
+  length: number;
+  tokenType: number;
+  tokenModifiers: number;
+}
+
+function getSemanticToken(
+  textView: TextView,
+  node: AST.AST
+): SemanticTokenEntry | undefined {
+  if (!node.$ctx) {
+    return undefined;
+  }
+
+  let { start, end } = textView.rangeOfNode(node.$ctx!)!;
+  let line = start.line;
+  let character = start.character;
+  let length = end.character - start.character;
+  let tokenModifiers = 0;
+  let tokenType = undefined;
+
+  if (node instanceof AST.Param) {
+    tokenType = tokTypeToNum.get("parameter")!;
+  }
+
+  if (!tokenType) {
+    return undefined;
+  }
+
+  return {
+    line,
+    character,
+    length,
+    tokenType,
+    tokenModifiers,
+  };
+}
+
+// strategy = walk over the generated parse tree document, and walk descendants
+// if a particular descendant node is described by a semantic token, then apply the
+// selection function against the node to get the range, and push the token type.
+
 function provideDocumentSemanticTokens(document: TextDocument): SemanticTokens {
   // TODO: implement the real semantic tokens
   let text = document.getText();
@@ -75,19 +119,19 @@ function provideDocumentSemanticTokens(document: TextDocument): SemanticTokens {
   let tb = new SemanticTokensBuilder();
   try {
     let ast = parser.parse();
-    ast.descendantsOfType(AST.Param).forEach((param) => {
-      if (param.name) {
-        // get the range
-        let { start, end } = textView.rangeOfNode(param.name.$ctx!)!;
+
+    for (let node of ast.walkDescendantsLF()) {
+      let candidate = getSemanticToken(textView, node);
+      if (candidate) {
         tb.push(
-          start.line,
-          start.character,
-          end.character - start.character,
-          tokTypeToNum.get("parameter")!,
-          0
+          candidate.line,
+          candidate.character,
+          candidate.length,
+          candidate.tokenType,
+          candidate.tokenModifiers
         );
       }
-    });
+    }
     return tb.build();
   } catch (e) {
     console.log(e);
