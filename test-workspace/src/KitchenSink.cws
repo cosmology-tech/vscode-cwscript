@@ -11,9 +11,12 @@ import {
 } from "./ExtTest.cws"
 
 interface MyInterface {
-
+  query #baz() {}
 }
 
 contract MyContract {
-
+  #instantiate() {}
+  
+  exec #foo() {}
+  query #bar() {}
 }

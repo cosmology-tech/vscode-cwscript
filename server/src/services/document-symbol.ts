@@ -25,6 +25,8 @@ type DocumentSymbolExtractor<T extends AST.AST = AST.AST> = (node: T, textView: 
 
 const documentSymbolRegistry = new Map<Constructor<any>, DocumentSymbolExtractor<any>>();
 
+const getNodeName = (node: any) => node.name?.value ?? '<missing name>';
+
 function registerExtractor<T extends AST.AST>(
   nodeType: Constructor<T>,
   extractor: DocumentSymbolExtractor<T>,
@@ -33,7 +35,7 @@ function registerExtractor<T extends AST.AST>(
 }
 
 function defineExtractor<T extends AST.AST>({
-  getName = (node) => (node as any).name?.value,
+  getName = getNodeName,
   getKind,
   getSelectionRange = (node, textView) => textView.rangeOfNode(node.$ctx!)!,
   getDetail,
@@ -58,10 +60,12 @@ registerExtractor(AST.InstantiateDefn, defineExtractor({
 }));
 
 registerExtractor(AST.ExecDefn, defineExtractor({
+  getName: (node) => 'execute: ' + getNodeName(node),
   getKind: () => SymbolKind.Method,
 }));
 
 registerExtractor(AST.QueryDefn, defineExtractor({
+  getName: (node) => 'query: ' + getNodeName(node),
   getKind: () => SymbolKind.Method,
 }));
 
@@ -123,20 +127,19 @@ export default defineLanguageService<CWScriptLanguageServer>(function(result) {
     return getDocumentSymbols(ast, textView);
     
     function getDocumentSymbols(root: AST.SourceFile, textView: TextView): DocumentSymbol[] {
-      const symbols: DocumentSymbol[] = [];
       const process = (node: AST.AST) => {
+        const symbols: DocumentSymbol[] = [];
         const extractor = documentSymbolRegistry.get(node.constructor as any);
         if (extractor) {
           const docSymbol = extractor(node, textView);
-          docSymbol.children = node.descendants.map(process).filter(c => !!c) as DocumentSymbol[];
+          docSymbol.children = node.children.flatMap(process).filter(c => !!c) as DocumentSymbol[];
           symbols.push(docSymbol);
-          return docSymbol;
         } else {
-          node.descendants.forEach(process);
+          symbols.push(...node.children.flatMap(process).filter(c => !!c) as DocumentSymbol[]);
         }
+        return symbols;
       }
-      process(ast);
-      return symbols;
+      return process(root);
     }
   });
   

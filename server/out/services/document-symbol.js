@@ -4,10 +4,11 @@ const cwsc_1 = require("@terran-one/cwsc");
 const vscode_languageserver_1 = require("vscode-languageserver");
 const language_service_1 = require("../language-service");
 const documentSymbolRegistry = new Map();
+const getNodeName = (node) => node.name?.value ?? '<missing name>';
 function registerExtractor(nodeType, extractor) {
     documentSymbolRegistry.set(nodeType, extractor);
 }
-function defineExtractor({ getName = (node) => node.name?.value, getKind, getSelectionRange = (node, textView) => textView.rangeOfNode(node.$ctx), getDetail, }) {
+function defineExtractor({ getName = getNodeName, getKind, getSelectionRange = (node, textView) => textView.rangeOfNode(node.$ctx), getDetail, }) {
     return (node, textView) => ({
         name: getName(node),
         kind: getKind(node),
@@ -25,9 +26,11 @@ registerExtractor(cwsc_1.AST.InstantiateDefn, defineExtractor({
     getSelectionRange: (node, textView) => textView.rangeOfToken(node.$ctx, 'INSTANTIATE'),
 }));
 registerExtractor(cwsc_1.AST.ExecDefn, defineExtractor({
+    getName: (node) => 'execute: ' + getNodeName(node),
     getKind: () => vscode_languageserver_1.SymbolKind.Method,
 }));
 registerExtractor(cwsc_1.AST.QueryDefn, defineExtractor({
+    getName: (node) => 'query: ' + getNodeName(node),
     getKind: () => vscode_languageserver_1.SymbolKind.Method,
 }));
 registerExtractor(cwsc_1.AST.ContractDefn, defineExtractor({
@@ -81,21 +84,20 @@ exports.default = (0, language_service_1.defineLanguageService)(function (result
         const { ast, textView } = parseEntry;
         return getDocumentSymbols(ast, textView);
         function getDocumentSymbols(root, textView) {
-            const symbols = [];
             const process = (node) => {
+                const symbols = [];
                 const extractor = documentSymbolRegistry.get(node.constructor);
                 if (extractor) {
                     const docSymbol = extractor(node, textView);
-                    docSymbol.children = node.descendants.map(process).filter(c => !!c);
+                    docSymbol.children = node.children.flatMap(process).filter(c => !!c);
                     symbols.push(docSymbol);
-                    return docSymbol;
                 }
                 else {
-                    node.descendants.forEach(process);
+                    symbols.push(...node.children.flatMap(process).filter(c => !!c));
                 }
+                return symbols;
             };
-            process(ast);
-            return symbols;
+            return process(root);
         }
     });
     return result;
