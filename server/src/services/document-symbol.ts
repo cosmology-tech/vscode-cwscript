@@ -52,11 +52,9 @@ registerExtractor(AST.FnDefn, defineExtractor({
 }));
 
 registerExtractor(AST.InstantiateDefn, defineExtractor({
+  getName: () => 'instantiate',
   getKind: () => SymbolKind.Method,
-  getSelectionRange: (node, textView) => {
-    const {a, b} = (node.$ctx as InstantiateDefnContext).INSTANTIATE()!.sourceInterval!;
-    return textView.range(a, b)!;
-  },
+  getSelectionRange: (node, textView) => textView.rangeOfToken(node.$ctx!, 'INSTANTIATE')!,
 }));
 
 registerExtractor(AST.ExecDefn, defineExtractor({

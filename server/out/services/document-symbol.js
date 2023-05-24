@@ -20,11 +20,9 @@ registerExtractor(cwsc_1.AST.FnDefn, defineExtractor({
     getKind: () => vscode_languageserver_1.SymbolKind.Function,
 }));
 registerExtractor(cwsc_1.AST.InstantiateDefn, defineExtractor({
+    getName: () => 'instantiate',
     getKind: () => vscode_languageserver_1.SymbolKind.Method,
-    getSelectionRange: (node, textView) => {
-        const { a, b } = node.$ctx.INSTANTIATE().sourceInterval;
-        return textView.range(a, b);
-    },
+    getSelectionRange: (node, textView) => textView.rangeOfToken(node.$ctx, 'INSTANTIATE'),
 }));
 registerExtractor(cwsc_1.AST.ExecDefn, defineExtractor({
     getKind: () => vscode_languageserver_1.SymbolKind.Method,
