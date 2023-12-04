@@ -1,17 +1,13 @@
-import { InitializeResult } from "vscode-languageserver";
-import { LanguageServer } from "../util/language-server";
+import { defineLanguageService } from "../language-service";
+import { CWScriptLanguageServer } from "../server";
 
-export default {
-  init(result: InitializeResult) {
-    result.capabilities.hoverProvider = true;
-    return result;
-  },
-
-  register(server: LanguageServer) {
-    const { connection } = server;
-    // connection.onHover((params) => {
-    //   let doc = server.documents.get(params.textDocument.uri);
-    //   let pos = params.position;
-    // });
-  },
-};
+export default defineLanguageService<CWScriptLanguageServer>(function(result) {
+  result.capabilities.hoverProvider = true;
+  
+  // this.connection.onHover((params) => {
+  //   let doc = this.documents.get(params.textDocument.uri);
+  //   let pos = params.position;
+  // });
+  
+  return result;
+});

@@ -17,7 +17,7 @@ class LanguageServer {
     /** Initialize the language server on the underlying connection. */
     initialize(baseResult) {
         for (const service of this.SERVICES) {
-            baseResult = service.init?.(baseResult) ?? baseResult;
+            baseResult = service.call(this, baseResult) ?? baseResult;
         }
         return baseResult;
     }
@@ -25,7 +25,9 @@ class LanguageServer {
         this._connection = connection;
         connection.onInitialize(({ capabilities }) => {
             this.clientCapabilities = capabilities;
-            return this.initialize({ capabilities: {}, serverInfo: this.SERVER_INFO });
+            const result = this.initialize({ capabilities: {}, serverInfo: this.SERVER_INFO });
+            this.capabilities = result.capabilities;
+            return result;
         });
         this.setup();
         this.documents.listen(this.connection);
