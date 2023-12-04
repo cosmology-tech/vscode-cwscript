@@ -3,14 +3,15 @@ import * from "./common.cws"
 contract TerraswapFactory {
 
   error Unauthorized()
-  event UpdateConfig()
+  event cpdateConfig()
 
   state {
     config: Config
     tmp_pair_info: TmpPairInfo
-    pairs[U8]: PairInfo = None
-    allow_native_tokens[U8[2]]: U8 = None
+    pairs[U8]: PairInfo 
+    allow_native_tokens[U8]: U8
   }
+
 
   fn query_decimals!(account_addr: Address, asset_info: AssetInfo) -> U8 {
     if asset_info is AssetInfo.#Token {
@@ -47,22 +48,9 @@ contract TerraswapFactory {
     emit UpdateConfig()
   }
 
-  reply.on_success post_instantiate() {
-    let { tmp_pair_info } = $state
 
-    let response = Wasm.Instantiate::parse_response!($data)
-    let pair_contract = response.address
-    let pair_info = query! TerraswapPair(pair_contract).#pair() ~ .token_supply
-    $state.pairs = PairInfo(
-      Address.Canonical!(pair_info.liquidity_token),
-      Address.Canonical!(pair_info.liquidity_token),
-      asset_infos=tmp_pair_info.asset_infos,
-      asset_decimals=tmp_pair_info.asset_decimals
-    )
-    emit PostInstantiate(pair_contract, pair_info.liquidity_token)
-  }
 
-  exec #create_pair(asset_infos: AssetInfo[2]) {
+  exec #create_pair(asset_infos: [AssetInfo; 2]) {
     if asset_infos[0] == asset_infos[1] {
       fail! "same asset"
     }
@@ -109,12 +97,12 @@ contract TerraswapFactory {
 
   query #pair(asset_infos: AssetInfo[2]) {
     let pairs = $state.pairs[asset_infos]
-    return { pairs }
+    return pairs;
   }
 
   query #native_token_decimal(denom: String) {
     let decimals = $state.allow_native_tokens[denom]
-    return { decimals }
+    return decimals;
   }
 
 }

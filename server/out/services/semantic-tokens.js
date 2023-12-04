@@ -53,6 +53,33 @@ const LEGEND = {
     tokenTypes: tokenTypesList,
     tokenModifiers: tokenModifiersList,
 };
+function getSemanticToken(textView, node) {
+    if (!node.$ctx) {
+        return undefined;
+    }
+    let { start, end } = textView.rangeOfNode(node.$ctx);
+    let line = start.line;
+    let character = start.character;
+    let length = end.character - start.character;
+    let tokenModifiers = 0;
+    let tokenType = undefined;
+    if (node instanceof cwsc_1.AST.Param) {
+        tokenType = tokTypeToNum.get("parameter");
+    }
+    if (!tokenType) {
+        return undefined;
+    }
+    return {
+        line,
+        character,
+        length,
+        tokenType,
+        tokenModifiers,
+    };
+}
+// strategy = walk over the generated parse tree document, and walk descendants
+// if a particular descendant node is described by a semantic token, then apply the
+// selection function against the node to get the range, and push the token type.
 function provideDocumentSemanticTokens(document) {
     // TODO: implement the real semantic tokens
     let text = document.getText();
@@ -61,13 +88,12 @@ function provideDocumentSemanticTokens(document) {
     let tb = new node_1.SemanticTokensBuilder();
     try {
         let ast = parser.parse();
-        ast.descendantsOfType(cwsc_1.AST.Param).forEach((param) => {
-            if (param.name) {
-                // get the range
-                let { start, end } = textView.rangeOfNode(param.name.$ctx);
-                tb.push(start.line, start.character, end.character - start.character, tokTypeToNum.get("parameter"), 0);
+        for (let node of ast.walkDescendantsLF()) {
+            let candidate = getSemanticToken(textView, node);
+            if (candidate) {
+                tb.push(candidate.line, candidate.character, candidate.length, candidate.tokenType, candidate.tokenModifiers);
             }
-        });
+        }
         return tb.build();
     }
     catch (e) {

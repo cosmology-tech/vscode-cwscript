@@ -5,36 +5,28 @@
 import {
   Connection,
   createConnection,
+  Diagnostic,
   ProposedFeatures,
 } from "vscode-languageserver/node";
 
+import { CWScriptParser } from "cwsc/dist/parser";
+import * as AST from "cwsc/dist/ast";
+import { TextView } from "cwsc/dist/util/position";
+
 import { LanguageServer, LanguageService } from "./util/language-server";
-import SemanticTokensService from "./services/semantic-tokens";
-import SignatureHelpService from "./services/signature-help";
+// import SemanticTokensService from "./services/semantic-tokens";
+// import SignatureHelpService from "./services/signature-help";
 import DiagnosticsService from "./services/diagnostics";
-import DocumentSymbolService from "./services/document-symbol";
-import { AST, CWSParser } from "@terran-one/cwsc";
-import { TextView } from "@terran-one/cwsc/dist/util/position";
+// import DocumentSymbolService from "./services/document-symbol";
 
 const connection = createConnection(ProposedFeatures.all);
+export type ParserListenerFn = (ctx: {
+  uri: string;
+  ast: AST.SourceFile;
+  diagnostics: Diagnostic[];
+}) => void;
 
-export interface ParseCacheEntry {
-  textView: TextView;
-  ast?: AST.SourceFile;
-  parser: CWSParser;
-}
-
-export type ParserListenerFn = (
-  uri: string,
-  ast: AST.SourceFile | undefined,
-  parser: CWSParser
-) => void;
-export type ParserListenerObj = {
-  onParse: ParserListenerFn;
-};
 export class CWScriptLanguageServer extends LanguageServer {
-  public parseCache: Map<string, ParseCacheEntry> = new Map();
-  public parserListeners: Array<ParserListenerFn | ParserListenerObj> = [];
   public SERVER_INFO = {
     name: "cwsls",
     version: "0.0.1",
@@ -42,10 +34,20 @@ export class CWScriptLanguageServer extends LanguageServer {
 
   public SERVICES: LanguageService<this>[] = [
     DiagnosticsService,
-    DocumentSymbolService,
-    SemanticTokensService,
-    SignatureHelpService,
+    // DocumentSymbolService,
+    // SemanticTokensService,
+    // SignatureHelpService,
   ];
+
+  public cache = new Map<
+    string,
+    {
+      ast?: AST.SourceFile;
+      diagnostics: Diagnostic[];
+    }
+  >();
+
+  public parserListeners: ParserListenerFn[] = [];
 
   setup() {
     // initialiaze a parser cache
@@ -54,21 +56,17 @@ export class CWScriptLanguageServer extends LanguageServer {
       const doc = this.documents.get(uri);
       this.parseFile(uri, doc!.getText());
     });
+
+    this.SERVICES.forEach((service) => {
+      service.register(this);
+    });
   }
 
-  parseFile(uri: string, source: string): ParseCacheEntry {
-    const textView = new TextView(source);
-    const parser = new CWSParser(source);
-    const ast = parser.parse();
-    this.parseCache.set(uri, { ast, parser, textView });
-    this.parserListeners.forEach((listener) => {
-      if (typeof listener === "function") {
-        listener(uri, ast, parser);
-      } else {
-        listener.onParse(uri, ast, parser);
-      }
-    });
-    return { ast, parser, textView };
+  parseFile(uri: string, source: string) {
+    const parser = new CWScriptParser(source, uri);
+    const { ast, diagnostics } = parser.parse();
+    this.cache.set(uri, { ast, diagnostics });
+    this.parserListeners.forEach((fn) => fn({ uri, ast: ast!, diagnostics }));
   }
 }
 
