@@ -6,7 +6,7 @@
     "cws": "_cwscript"
   },
   "fileNames": {
-    "cwsproject.toml": "_cwsproject",
+    "cwsproject.json": "_cwsproject"
   },
   "iconDefinitions": {
     "_cwscript": {
@@ -14,6 +14,6 @@
     },
     "_cwsproject": {
       "iconPath": "./images/cwsproject.png"
-    },
+    }
   }
 }

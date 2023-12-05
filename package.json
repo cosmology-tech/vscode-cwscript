@@ -1,7 +1,7 @@
 {
   "name": "vscode-cwscript",
   "displayName": "CWScript Language Support",
-  "description": "Adds CWScript language support and utils to VS Code",
+  "description": "CWScript language support for Visual Studio Code",
   "version": "0.0.1",
   "publisher": "terran-one",
   "engines": {
@@ -12,6 +12,12 @@
   ],
   "main": "./client/out/extension",
   "contributes": {
+    "jsonValidation": [
+      {
+        "fileMatch": "cwsproject.json",
+        "url": "./cwsproject.schema.json"
+      }
+    ],
     "iconThemes": [
       {
         "id": "cwscript",

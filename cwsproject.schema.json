@@ -1,0 +1,143 @@
+{
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Project name"
+    },
+    "version": {
+      "type": "string",
+      "description": "Project version (semver)"
+    },
+    "sourceDir": {
+      "type": "string",
+      "default": "src",
+      "description": "Path to directory containing CWScript source files"
+    },
+    "buildDir": {
+      "type": "string",
+      "default": "build",
+      "description": "Path to directory for build output"
+    },
+    "packagesDir": {
+      "type": "string",
+      "default": "packages",
+      "description": "Path to directory for package dependencies"
+    },
+    "package": {
+      "type": "boolean",
+      "default": false,
+      "description": "Indicates whether a project should be treated as a package"
+    },
+    "description": {
+      "type": "string",
+      "description": "Project description"
+    },
+    "authors": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Project authors"
+    },
+    "license": {
+      "type": "string",
+      "description": "Project license"
+    },
+    "website": {
+      "type": "string",
+      "description": "URL to project website"
+    },
+    "repository": {
+      "type": "string",
+      "description": "URL to project repository"
+    },
+    "dependencies": {
+      "type": "object",
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "path": {
+                "type": "string"
+              },
+              "version": {
+                "type": "string"
+              }
+            },
+            "required": ["path"],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "git": {
+                "type": "string"
+              },
+              "version": {
+                "type": "string"
+              }
+            },
+            "required": ["git"],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "description": "External CWScript packages required by the project"
+    },
+    "readme": {
+      "type": "string",
+      "description": "Path or URL to project's README"
+    },
+    "cwsc": {
+      "type": "object",
+      "properties": {
+        "languageVersion": {
+          "type": "string",
+          "description": "CWScript language version (semver)"
+        },
+        "debug": {
+          "type": "boolean",
+          "description": "Enable debug mode"
+        },
+        "showDiagnostics": {
+          "type": "object",
+          "properties": {
+            "warnings": {
+              "type": "boolean",
+              "description": "Show warnings"
+            },
+            "errors": {
+              "type": "boolean",
+              "description": "Show errors"
+            },
+            "info": {
+              "type": "boolean",
+              "description": "Show info messages"
+            },
+            "hint": {
+              "type": "boolean",
+              "description": "Show hints"
+            }
+          },
+          "additionalProperties": false,
+          "description": "Flags for showing diagnostic messages during compilation"
+        },
+        "strict": {
+          "type": "boolean",
+          "description": "Enable strict mode"
+        }
+      },
+      "additionalProperties": false,
+      "description": "CWScript Compiler settings"
+    }
+  },
+  "required": ["name", "version"],
+  "additionalProperties": false,
+  "description": "CWScript Project Configuration",
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}
