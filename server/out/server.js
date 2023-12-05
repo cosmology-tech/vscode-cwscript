@@ -7,7 +7,7 @@ const language_server_1 = require("./language-server");
 // import SemanticTokensService from "./services/semantic-tokens";
 // import SignatureHelpService from "./services/signature-help";
 const diagnostics_1 = require("./services/diagnostics");
-// import DocumentSymbolService from "./services/document-symbol";
+const document_symbol_1 = require("./services/document-symbol");
 const connection = (0, node_1.createConnection)(node_1.ProposedFeatures.all);
 class CWScriptLanguageServer extends language_server_1.LanguageServer {
     constructor() {
@@ -18,7 +18,7 @@ class CWScriptLanguageServer extends language_server_1.LanguageServer {
         };
         this.SERVICES = [
             diagnostics_1.default,
-            // DocumentSymbolService,
+            document_symbol_1.default,
             // SemanticTokensService,
             // SignatureHelpService,
         ];
@@ -29,19 +29,28 @@ class CWScriptLanguageServer extends language_server_1.LanguageServer {
         // initialize a parser cache
         this.documents.onDidChangeContent((change) => {
             const { uri } = change.document;
-            const source = this.documents.get(uri)?.getText();
-            if (source)
-                this.parseFile(uri, source);
+            const text = this.documents.get(uri)?.getText();
+            if (text)
+                this.parseFile(uri, text);
         });
         this.SERVICES.forEach((service) => {
             service.register(this);
         });
     }
-    parseFile(uri, source) {
-        const parser = new parser_1.CWScriptParser(source, uri);
+    fileInfo(uri) {
+        if (!this.cache.has(uri)) {
+            return this.parseFile(uri, this.documents.get(uri)?.getText());
+        }
+        else {
+            return this.cache.get(uri);
+        }
+    }
+    parseFile(uri, text) {
+        const parser = new parser_1.CWScriptParser(text, uri);
         const { ast, diagnostics } = parser.parse();
-        this.cache.set(uri, { ast, diagnostics });
+        this.cache.set(uri, { text, ast, diagnostics });
         this.parserListeners.forEach((fn) => fn({ uri, ast: ast, diagnostics }));
+        return { text, ast, diagnostics };
     }
 }
 exports.CWScriptLanguageServer = CWScriptLanguageServer;

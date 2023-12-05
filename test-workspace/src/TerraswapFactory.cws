@@ -3,7 +3,7 @@ import * from "./common.cws"
 contract TerraswapFactory {
 
   error Unauthorized()
-  event cpdateConfig()
+  event Config()
 
   state {
     config: Config
@@ -48,34 +48,6 @@ contract TerraswapFactory {
     emit UpdateConfig()
   }
 
-
-
-  exec #create_pair(asset_infos: [AssetInfo; 2]) {
-    if asset_infos[0] == asset_infos[1] {
-      fail! "same asset"
-    }
-    
-    let asset_1_decimal = query_decimals!($env.contract.address, asset_infos[0])
-    let asset_2_decimal = query_decimals!($env.contract.address, asset_infos[1])
-    let asset_decimals = [asset_1_decimal, asset_2_decimal]
-
-    let pair_key = String!(asset_infos[0]) + String!(asset_infos[1])
-    if pair_key in $state.pairs {
-      fail! "Pair already exists"
-    }
-
-    $state.tmp_pair_info = TmpPairInfo { pair_key, asset_infos, asset_decimals }
-    emit CreatePair(asset_infos[0], asset_infos[1])
-
-    @gas_limit(5000000)
-    @reply.on_success(post_instantiate)
-    instantiate! #TerraswapPair(asset_infos, $state.config.token_code_id, asset_decimals) {
-      code_id: $state.config.pair_code_id,
-      admin: $env.contract.address,
-      label: "pair"
-    }
-  }
-
   exec #add_native_token_decimals(denom: String, decimals: U8) {
     if $info.sender != $state.config.owner {
       fail! Unauthorized()
@@ -95,7 +67,7 @@ contract TerraswapFactory {
     return $state.config
   }
 
-  query #pair(asset_infos: AssetInfo[2]) {
+  query #pair(asset_infos: [AssetInfo; 2]) {
     let pairs = $state.pairs[asset_infos]
     return pairs;
   }

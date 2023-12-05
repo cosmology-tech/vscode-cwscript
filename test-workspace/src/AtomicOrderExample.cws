@@ -27,14 +27,16 @@ contract AtomicOrderExample extends CW2 {
 
     let market = try {
       query! Exchange.#market(market_id)
-    } else fail! "Market with id: {market_id} not found"
+    } else {
+      fail! "Market with id: {market_id} not found"
+    }
 
     let config = ContractConfigState {
       market_id,
       base_denom: market.base_denom,
       quote_denom: market.quote_denom,
       owner: $info.sender,
-      contract_subaccount_id: SubaccountId($env.contract.address, 0),
+      contract_subaccount_id: SubaccountId($env.contract.address, 0)
     }
 
     CW2.set_contract_version!($, CONTRACT_NAME, CONTRACT_VERSION)

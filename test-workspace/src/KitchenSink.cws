@@ -1,8 +1,6 @@
 import { aa } from "asdf";
 
-<<<<<<< HEAD
 contract Ea {}
-=======
 interface MyInterface {
   query #baz() {}
 }
@@ -13,4 +11,3 @@ contract MyContract {
   exec #foo() {}
   query #bar() {}
 }
->>>>>>> 907b476c5563057b3ec4ff630845c7de9f6fff8d
