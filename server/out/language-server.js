@@ -17,7 +17,7 @@ class LanguageServer {
     /** Initialize the language server on the underlying connection. */
     initialize(baseResult) {
         for (const service of this.SERVICES) {
-            baseResult = service.call(this, baseResult) ?? baseResult;
+            baseResult = service.init ? service.init(baseResult) : baseResult;
         }
         return baseResult;
     }
@@ -25,7 +25,10 @@ class LanguageServer {
         this._connection = connection;
         connection.onInitialize(({ capabilities }) => {
             this.clientCapabilities = capabilities;
-            const result = this.initialize({ capabilities: {}, serverInfo: this.SERVER_INFO });
+            const result = this.initialize({
+                capabilities: {},
+                serverInfo: this.SERVER_INFO,
+            });
             this.capabilities = result.capabilities;
             return result;
         });
@@ -39,7 +42,8 @@ class LanguageServer {
         return this.clientCapabilities?.workspace?.workspaceFolders ?? false;
     }
     get useDiagnosticRelatedInformation() {
-        return this.clientCapabilities?.textDocument?.publishDiagnostics?.relatedInformation ?? false;
+        return (this.clientCapabilities?.textDocument?.publishDiagnostics
+            ?.relatedInformation ?? false);
     }
 }
 exports.LanguageServer = LanguageServer;

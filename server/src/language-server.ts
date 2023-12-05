@@ -8,7 +8,7 @@ import {
   ServerCapabilities,
 } from "vscode-languageserver/node";
 import { TextDocument } from "vscode-languageserver-textdocument";
-import type { LanguageService } from './language-service';
+import type { LanguageService } from "./language-service";
 
 export abstract class LanguageServer {
   public clientCapabilities: ClientCapabilities | undefined;
@@ -16,7 +16,7 @@ export abstract class LanguageServer {
   public documents = new TextDocuments(TextDocument);
   protected _connection: Connection | undefined;
 
-  abstract get SERVICES(): LanguageService<any>[];
+  abstract get SERVICES(): LanguageService[];
   abstract get SERVER_INFO(): {
     name: string;
     version?: string;
@@ -30,29 +30,32 @@ export abstract class LanguageServer {
   }
 
   protected abstract setup(): any;
-  
+
   /** Initialize the language server on the underlying connection. */
   protected initialize(baseResult: InitializeResult): InitializeResult {
     for (const service of this.SERVICES) {
-      baseResult = service.call(this, baseResult) ?? baseResult
+      baseResult = service.init ? service.init(baseResult) : baseResult;
     }
     return baseResult;
   }
 
   public listen(connection: Connection) {
     this._connection = connection;
-    
+
     connection.onInitialize(({ capabilities }) => {
       this.clientCapabilities = capabilities;
-      const result = this.initialize({ capabilities: {}, serverInfo: this.SERVER_INFO });
+      const result = this.initialize({
+        capabilities: {},
+        serverInfo: this.SERVER_INFO,
+      });
       this.capabilities = result.capabilities;
       return result;
     });
-    
+
     this.setup();
     this.documents.listen(this.connection);
   }
-  
+
   public get useWorkspaceConfig(): boolean {
     return this.clientCapabilities?.workspace?.configuration ?? false;
   }
@@ -60,6 +63,9 @@ export abstract class LanguageServer {
     return this.clientCapabilities?.workspace?.workspaceFolders ?? false;
   }
   public get useDiagnosticRelatedInformation(): boolean {
-    return this.clientCapabilities?.textDocument?.publishDiagnostics?.relatedInformation ?? false;
+    return (
+      this.clientCapabilities?.textDocument?.publishDiagnostics
+        ?.relatedInformation ?? false
+    );
   }
 }
