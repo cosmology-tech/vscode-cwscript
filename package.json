@@ -12,6 +12,14 @@
   ],
   "main": "./client/out/extension",
   "contributes": {
+    "commands": [
+      {
+        "command": "cwscript.showAst",
+        "title": "Show AST for active document",
+        "category": "CWScript",
+        "enablement": "editorLangId == cwscript"
+      }
+    ],
     "jsonValidation": [
       {
         "fileMatch": "cwsproject.json",
@@ -52,7 +60,24 @@
         "scopeName": "source.cwscript",
         "path": "./syntaxes/cwscript.tmLanguage.json"
       }
-    ]
+    ],
+    "views": {
+      "explorer": [
+        {
+          "id": "cwscript-ast",
+          "name": "CWScript AST"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "panel": [
+        {
+          "id": "cwscript-ast",
+          "title": "CWScript AST",
+          "icon": "./fileicons/images/cwsfile.svg"
+        }
+      ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "yarn run compile",
